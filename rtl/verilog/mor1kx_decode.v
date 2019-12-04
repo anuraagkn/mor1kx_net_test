@@ -1,538 +1,1933 @@
-/* ****************************************************************************
-  This Source Code Form is subject to the terms of the
-  Open Hardware Description License, v. 1.0. If a copy
-  of the OHDL was not distributed with this file, You
-  can obtain one at http://juliusbaxter.net/ohdl/ohdl.txt
-
-  Description: mor1kx decode unit
-
-  Completely combinatorial.
-
-  Outputs:
-   - ALU operation
-   - indication of other type of op - LSU/SPR
-   - immediates
-   - register file addresses
-   - exception decodes:  illegal, system call
-
-  Copyright (C) 2012 Julius Baxter <juliusbaxter@gmail.com>
-  Copyright (C) 2013 Stefan Kristiansson <stefan.kristiansson@saunalahti.fi>
-
-***************************************************************************** */
-
-`include "mor1kx-defines.v"
-
-module mor1kx_decode
-  #(
-    parameter OPTION_OPERAND_WIDTH = 32,
-    parameter OPTION_RESET_PC = {{(OPTION_OPERAND_WIDTH-13){1'b0}},
-				 `OR1K_RESET_VECTOR,8'd0},
-    parameter OPTION_RF_ADDR_WIDTH = 5,
-
-    parameter FEATURE_SYSCALL = "ENABLED",
-    parameter FEATURE_TRAP = "ENABLED",
-    parameter FEATURE_RANGE = "ENABLED",
-    parameter FEATURE_MAC = "NONE",
-    parameter FEATURE_MULTIPLIER = "PARALLEL",
-    parameter FEATURE_DIVIDER = "NONE",
-
-    parameter FEATURE_ADDC = "NONE",
-    parameter FEATURE_SRA = "ENABLED",
-    parameter FEATURE_ROR = "NONE",
-    parameter FEATURE_EXT = "NONE",
-    parameter FEATURE_CMOV = "NONE",
-    parameter FEATURE_FFL1 = "NONE",
-    parameter FEATURE_ATOMIC = "ENABLED",
-    parameter FEATURE_MSYNC = "ENABLED",
-    parameter FEATURE_PSYNC = "NONE",
-    parameter FEATURE_CSYNC = "NONE",
-
-    parameter FEATURE_FPU   = "NONE", // ENABLED|NONE
-
-    parameter FEATURE_CUST1 = "NONE",
-    parameter FEATURE_CUST2 = "NONE",
-    parameter FEATURE_CUST3 = "NONE",
-    parameter FEATURE_CUST4 = "NONE",
-    parameter FEATURE_CUST5 = "NONE",
-    parameter FEATURE_CUST6 = "NONE",
-    parameter FEATURE_CUST7 = "NONE",
-    parameter FEATURE_CUST8 = "NONE"
-    )
-   (
-    input 			      clk,
-    input 			      rst,
-
-    // input from fetch stage
-    input [`OR1K_INSN_WIDTH-1:0]      decode_insn_i,
-
-    // ALU opcodes
-    output [`OR1K_ALU_OPC_WIDTH-1:0]  decode_opc_alu_o,
-    output [`OR1K_ALU_OPC_WIDTH-1:0]  decode_opc_alu_secondary_o,
-
-    output [`OR1K_IMM_WIDTH-1:0]      decode_imm16_o,
-    output [OPTION_OPERAND_WIDTH-1:0] decode_immediate_o,
-    output 			      decode_immediate_sel_o,
-
-    // Upper 10 bits of immediate for jumps and branches
-    output [9:0] 		      decode_immjbr_upper_o,
-
-    // GPR numbers
-    output [OPTION_RF_ADDR_WIDTH-1:0] decode_rfd_adr_o,
-    output [OPTION_RF_ADDR_WIDTH-1:0] decode_rfa_adr_o,
-    output [OPTION_RF_ADDR_WIDTH-1:0] decode_rfb_adr_o,
-
-    output 			      decode_rf_wb_o,
-
-    output 			      decode_op_jbr_o,
-    output 			      decode_op_jr_o,
-    output 			      decode_op_jal_o,
-    output 			      decode_op_bf_o,
-    output 			      decode_op_bnf_o,
-    output 			      decode_op_brcond_o,
-    output 			      decode_op_branch_o,
-
-    output 			      decode_op_alu_o,
-
-    output 			      decode_op_lsu_load_o,
-    output 			      decode_op_lsu_store_o,
-    output 			      decode_op_lsu_atomic_o,
-    output reg [1:0] 		      decode_lsu_length_o,
-    output 			      decode_lsu_zext_o,
-
-    output 			      decode_op_mfspr_o,
-    output 			      decode_op_mtspr_o,
-
-    output 			      decode_op_rfe_o,
-    output 			      decode_op_setflag_o,
-    output 			      decode_op_add_o,
-    output 			      decode_op_mul_o,
-    output 			      decode_op_mul_signed_o,
-    output 			      decode_op_mul_unsigned_o,
-    output 			      decode_op_div_o,
-    output 			      decode_op_div_signed_o,
-    output 			      decode_op_div_unsigned_o,
-    output 			      decode_op_shift_o,
-    output 			      decode_op_ffl1_o,
-    output 			      decode_op_movhi_o,
-    output 			      decode_op_ext_o,
-
-    // Sync operations
-    output                            decode_op_msync_o,
-    output [`OR1K_FPUOP_WIDTH-1:0]    decode_op_fpu_o,
-
-
-    // Adder control logic
-    output 			      decode_adder_do_sub_o,
-    output 			      decode_adder_do_carry_o,
-
-    // exception output -
-    output reg 			      decode_except_illegal_o,
-    output 			      decode_except_syscall_o,
-    output 			      decode_except_trap_o,
-
-    output [`OR1K_OPCODE_WIDTH-1:0]   decode_opc_insn_o
-    );
-
-   wire [`OR1K_OPCODE_WIDTH-1:0]      opc_insn;
-   wire [`OR1K_ALU_OPC_WIDTH-1:0]     opc_alu;
-
-   wire [OPTION_OPERAND_WIDTH-1:0]    imm_sext;
-   wire 			      imm_sext_sel;
-   wire [OPTION_OPERAND_WIDTH-1:0]    imm_zext;
-   wire 			      imm_zext_sel;
-   wire [OPTION_OPERAND_WIDTH-1:0]    imm_high;
-   wire 			      imm_high_sel;
-
-   wire 			      decode_except_ibus_align;
-
-   // Insn opcode
-   assign opc_insn = decode_insn_i[`OR1K_OPCODE_SELECT];
-   assign decode_opc_insn_o = opc_insn;
-
-   // load opcodes are 6'b10_0000 to 6'b10_0110, 0 to 6, so check for 7 and up
-   assign decode_op_lsu_load_o = (decode_insn_i[31:30] == 2'b10) &
-				 !(&decode_insn_i[28:26]) &
-				 !decode_insn_i[29] ||
-				 ((opc_insn == `OR1K_OPCODE_LWA) &
-				 (FEATURE_ATOMIC!="NONE"));
-
-   // Detect when instruction is store
-   assign decode_op_lsu_store_o = (opc_insn == `OR1K_OPCODE_SW) ||
-				  (opc_insn == `OR1K_OPCODE_SB) ||
-				  (opc_insn == `OR1K_OPCODE_SH) ||
-				  ((opc_insn == `OR1K_OPCODE_SWA) &
-				  (FEATURE_ATOMIC!="NONE"));
-
-   assign decode_op_lsu_atomic_o = ((opc_insn == `OR1K_OPCODE_LWA) ||
-				    (opc_insn == `OR1K_OPCODE_SWA)) &
-				   (FEATURE_ATOMIC!="NONE");
-
-   // Decode length of load/store operation
-   always @(*)
-     case (opc_insn)
-       `OR1K_OPCODE_SB,
-       `OR1K_OPCODE_LBZ,
-       `OR1K_OPCODE_LBS:
-	 decode_lsu_length_o = 2'b00;
-
-       `OR1K_OPCODE_SH,
-       `OR1K_OPCODE_LHZ,
-       `OR1K_OPCODE_LHS:
-	 decode_lsu_length_o = 2'b01;
-
-       `OR1K_OPCODE_SW,
-       `OR1K_OPCODE_SWA,
-       `OR1K_OPCODE_LWZ,
-       `OR1K_OPCODE_LWS,
-       `OR1K_OPCODE_LWA:
-	 decode_lsu_length_o = 2'b10;
-
-       default:
-	 decode_lsu_length_o = 2'b10;
-     endcase
-
-   assign decode_lsu_zext_o = opc_insn[0];
-
-   assign decode_op_msync_o = FEATURE_MSYNC!="NONE" &&
-                              opc_insn == `OR1K_OPCODE_SYSTRAPSYNC &&
-                              decode_insn_i[`OR1K_SYSTRAPSYNC_OPC_SELECT] ==
-                              `OR1K_SYSTRAPSYNC_OPC_MSYNC;
-
-   assign decode_op_mtspr_o = opc_insn == `OR1K_OPCODE_MTSPR;
-
-   // Detect when setflag instruction
-   assign decode_op_setflag_o = opc_insn == `OR1K_OPCODE_SF ||
-				opc_insn == `OR1K_OPCODE_SFIMM;
-
-   assign decode_op_alu_o = opc_insn == `OR1K_OPCODE_ALU ||
-			    opc_insn == `OR1K_OPCODE_ORI ||
-			    opc_insn == `OR1K_OPCODE_ANDI ||
-			    opc_insn == `OR1K_OPCODE_XORI;
-
-   // Bottom 4 opcodes branch against an immediate
-   assign decode_op_jbr_o = opc_insn < `OR1K_OPCODE_NOP;
-
-   assign decode_op_jr_o = opc_insn == `OR1K_OPCODE_JR |
-			   opc_insn == `OR1K_OPCODE_JALR;
-
-   assign decode_op_jal_o = opc_insn == `OR1K_OPCODE_JALR |
-			    opc_insn == `OR1K_OPCODE_JAL;
-
-   assign decode_op_bf_o = opc_insn == `OR1K_OPCODE_BF;
-   assign decode_op_bnf_o = opc_insn == `OR1K_OPCODE_BNF;
-   assign decode_op_brcond_o = decode_op_bf_o | decode_op_bnf_o;
-
-   // All branch instructions combined
-   assign decode_op_branch_o = decode_op_jbr_o |
-			       decode_op_jr_o |
-			       decode_op_jal_o;
-
-   assign decode_op_mfspr_o = opc_insn == `OR1K_OPCODE_MFSPR;
-
-   assign decode_op_rfe_o = opc_insn == `OR1K_OPCODE_RFE;
-
-   assign decode_op_add_o = (opc_insn == `OR1K_OPCODE_ALU &&
-			     (opc_alu == `OR1K_ALU_OPC_ADDC ||
-			      opc_alu == `OR1K_ALU_OPC_ADD ||
-			      opc_alu == `OR1K_ALU_OPC_SUB)) ||
-			    opc_insn == `OR1K_OPCODE_ADDIC ||
-			    opc_insn == `OR1K_OPCODE_ADDI;
-
-   assign decode_op_mul_signed_o = (opc_insn == `OR1K_OPCODE_ALU &&
-				    opc_alu == `OR1K_ALU_OPC_MUL) ||
-				   opc_insn == `OR1K_OPCODE_MULI;
-
-   assign decode_op_mul_unsigned_o = opc_insn == `OR1K_OPCODE_ALU &&
-				     opc_alu == `OR1K_ALU_OPC_MULU;
-
-   assign decode_op_mul_o = decode_op_mul_signed_o | decode_op_mul_unsigned_o;
-
-   assign decode_op_div_signed_o = opc_insn == `OR1K_OPCODE_ALU &&
-				   opc_alu == `OR1K_ALU_OPC_DIV;
-
-   assign decode_op_div_unsigned_o = opc_insn == `OR1K_OPCODE_ALU &&
-				     opc_alu == `OR1K_ALU_OPC_DIVU;
-
-   assign decode_op_div_o = decode_op_div_signed_o | decode_op_div_unsigned_o;
-
-   assign decode_op_shift_o = opc_insn == `OR1K_OPCODE_ALU &&
-			      opc_alu == `OR1K_ALU_OPC_SHRT ||
-			      opc_insn == `OR1K_OPCODE_SHRTI;
-
-   assign decode_op_ffl1_o = opc_insn == `OR1K_OPCODE_ALU &&
-			     opc_alu == `OR1K_ALU_OPC_FFL1;
-
-   assign decode_op_movhi_o = opc_insn == `OR1K_OPCODE_MOVHI;
-
-   assign decode_op_ext_o = opc_insn == `OR1K_OPCODE_ALU &&
-			    (opc_alu == `OR1K_ALU_OPC_EXTBH ||
-			     opc_alu == `OR1K_ALU_OPC_EXTW) &&
-			    (FEATURE_EXT!="NONE");
-
-   // FPU related
-   generate
-     /* verilator lint_off WIDTH */
-     if (FEATURE_FPU!="NONE") begin : fpu_decode_ena
-     /* verilator lint_on WIDTH */
-       // Only single precision FP-instructions are supported
-       assign decode_op_fpu_o  = { ((opc_insn == `OR1K_OPCODE_FPU) &
-                                    ~decode_insn_i[`OR1K_FPUOP_DOUBLE_BIT]), 
-                                   decode_insn_i[`OR1K_FPUOP_WIDTH-2:0] };
-     end
-     else begin : fpu_decode_none
-       assign decode_op_fpu_o  = {`OR1K_FPUOP_WIDTH{1'b0}};
-     end
-   endgenerate // FPU related
-
-   // Which instructions cause writeback?
-   assign decode_rf_wb_o = (opc_insn == `OR1K_OPCODE_JAL |
-			    opc_insn == `OR1K_OPCODE_MOVHI |
-			    opc_insn == `OR1K_OPCODE_JALR |
-			    opc_insn == `OR1K_OPCODE_LWA) |
-			   // All '10????' opcodes except l.sfxxi
-			   (decode_insn_i[31:30] == 2'b10 &
-			    !(opc_insn == `OR1K_OPCODE_SFIMM)) |
-			   // All '11????' opcodes except l.sfxx and l.mtspr and lf.sfxx.s
-			   (decode_insn_i[31:30] == 2'b11 &
-			    !(opc_insn == `OR1K_OPCODE_SF |
-			      decode_op_mtspr_o | decode_op_lsu_store_o) &
-          !(decode_op_fpu_o[`OR1K_FPUOP_WIDTH-1] & decode_insn_i[3]));
-
-   // Register file addresses
-   assign decode_rfa_adr_o = decode_insn_i[`OR1K_RA_SELECT];
-   assign decode_rfb_adr_o = decode_insn_i[`OR1K_RB_SELECT];
-
-   assign decode_rfd_adr_o = decode_op_jal_o ? 5'd9 :
-			     decode_insn_i[`OR1K_RD_SELECT];
-
-   // Immediate in l.mtspr is broken up, reassemble
-   assign decode_imm16_o = (decode_op_mtspr_o | decode_op_lsu_store_o) ?
-			   {decode_insn_i[25:21],decode_insn_i[10:0]} :
-			   decode_insn_i[`OR1K_IMM_SELECT];
-
-
-   // Upper 10 bits for jump/branch instructions
-   assign decode_immjbr_upper_o = decode_insn_i[25:16];
-
-   assign imm_sext = {{16{decode_imm16_o[15]}}, decode_imm16_o[15:0]};
-   assign imm_sext_sel = ((opc_insn[5:4] == 2'b10) &
-                          ~(opc_insn == `OR1K_OPCODE_ORI) &
-                          ~(opc_insn == `OR1K_OPCODE_ANDI)) |
-                         (opc_insn == `OR1K_OPCODE_SWA) |
-                         (opc_insn == `OR1K_OPCODE_LWA) |
-                         (opc_insn == `OR1K_OPCODE_SW) |
-                         (opc_insn == `OR1K_OPCODE_SH) |
-                         (opc_insn == `OR1K_OPCODE_SB);
-
-   assign imm_zext = {{16{1'b0}}, decode_imm16_o[15:0]};
-   assign imm_zext_sel = ((opc_insn[5:4] == 2'b10) &
-                          ((opc_insn == `OR1K_OPCODE_ORI) |
-			   (opc_insn == `OR1K_OPCODE_ANDI))) |
-                         (opc_insn == `OR1K_OPCODE_MTSPR);
-
-   assign imm_high = {decode_imm16_o, 16'd0};
-   assign imm_high_sel = decode_op_movhi_o;
-
-   assign decode_immediate_o = imm_sext_sel ? imm_sext :
-			       imm_zext_sel ? imm_zext : imm_high;
-
-   assign decode_immediate_sel_o = imm_sext_sel | imm_zext_sel | imm_high_sel;
-
-   // ALU opcode
-   assign opc_alu = decode_insn_i[`OR1K_ALU_OPC_SELECT];
-   assign decode_opc_alu_o = opc_insn == `OR1K_OPCODE_ORI ? `OR1K_ALU_OPC_OR :
-			     opc_insn == `OR1K_OPCODE_ANDI ? `OR1K_ALU_OPC_AND :
-			     opc_insn == `OR1K_OPCODE_XORI ? `OR1K_ALU_OPC_XOR :
-			     opc_alu;
-
-   assign decode_opc_alu_secondary_o = decode_op_setflag_o ?
-				       decode_insn_i[`OR1K_COMP_OPC_SELECT]:
-				       {1'b0,
-					decode_insn_i[`OR1K_ALU_OPC_SECONDARY_SELECT]};
-
-   assign decode_except_syscall_o = opc_insn == `OR1K_OPCODE_SYSTRAPSYNC &&
-				    decode_insn_i[`OR1K_SYSTRAPSYNC_OPC_SELECT] ==
-				    `OR1K_SYSTRAPSYNC_OPC_SYSCALL;
-
-   assign decode_except_trap_o = opc_insn == `OR1K_OPCODE_SYSTRAPSYNC &&
-				 decode_insn_i[`OR1K_SYSTRAPSYNC_OPC_SELECT] ==
-				 `OR1K_SYSTRAPSYNC_OPC_TRAP;
-
-   // Illegal instruction decode
-   always @*
-     case (opc_insn)
-       `OR1K_OPCODE_J,
-       `OR1K_OPCODE_JAL,
-       `OR1K_OPCODE_BNF,
-       `OR1K_OPCODE_BF,
-       `OR1K_OPCODE_MOVHI,
-       `OR1K_OPCODE_RFE,
-       `OR1K_OPCODE_JR,
-       `OR1K_OPCODE_JALR,
-       `OR1K_OPCODE_LWZ,
-       `OR1K_OPCODE_LWS,
-       `OR1K_OPCODE_LBZ,
-       `OR1K_OPCODE_LBS,
-       `OR1K_OPCODE_LHZ,
-       `OR1K_OPCODE_LHS,
-       `OR1K_OPCODE_ADDI,
-       `OR1K_OPCODE_ANDI,
-       `OR1K_OPCODE_ORI,
-       `OR1K_OPCODE_XORI,
-       `OR1K_OPCODE_MFSPR,
-       /*
-	`OR1K_OPCODE_SLLI,
-	`OR1K_OPCODE_SRLI,
-	`OR1K_OPCODE_SRAI,
-	`OR1K_OPCODE_RORI,
-	*/
-       `OR1K_OPCODE_SFIMM,
-       `OR1K_OPCODE_MTSPR,
-       `OR1K_OPCODE_SW,
-       `OR1K_OPCODE_SB,
-       `OR1K_OPCODE_SH,
-       /*
-	`OR1K_OPCODE_SFEQ,
-	`OR1K_OPCODE_SFNE,
-	`OR1K_OPCODE_SFGTU,
-	`OR1K_OPCODE_SFGEU,
-	`OR1K_OPCODE_SFLTU,
-	`OR1K_OPCODE_SFLEU,
-	`OR1K_OPCODE_SFGTS,
-	`OR1K_OPCODE_SFGES,
-	`OR1K_OPCODE_SFLTS,
-	`OR1K_OPCODE_SFLES,
-	*/
-       `OR1K_OPCODE_SF,
-       `OR1K_OPCODE_NOP:
-	 decode_except_illegal_o = 1'b0;
-
-       `OR1K_OPCODE_SWA,
-       `OR1K_OPCODE_LWA:
-	 decode_except_illegal_o = (FEATURE_ATOMIC=="NONE");
-
-       `OR1K_OPCODE_CUST1:
-	 decode_except_illegal_o = (FEATURE_CUST1=="NONE");
-       `OR1K_OPCODE_CUST2:
-	 decode_except_illegal_o = (FEATURE_CUST2=="NONE");
-       `OR1K_OPCODE_CUST3:
-	 decode_except_illegal_o = (FEATURE_CUST3=="NONE");
-       `OR1K_OPCODE_CUST4:
-	 decode_except_illegal_o = (FEATURE_CUST4=="NONE");
-       `OR1K_OPCODE_CUST5:
-	 decode_except_illegal_o = (FEATURE_CUST5=="NONE");
-       `OR1K_OPCODE_CUST6:
-	 decode_except_illegal_o = (FEATURE_CUST6=="NONE");
-       `OR1K_OPCODE_CUST7:
-	 decode_except_illegal_o = (FEATURE_CUST7=="NONE");
-       `OR1K_OPCODE_CUST8:
-	 decode_except_illegal_o = (FEATURE_CUST8=="NONE");
-       `OR1K_OPCODE_FPU:
-	 decode_except_illegal_o = (FEATURE_FPU=="NONE") |
-                             decode_insn_i[`OR1K_FPUOP_DOUBLE_BIT];
-
-       `OR1K_OPCODE_LD,
-	 `OR1K_OPCODE_SD:
-	   decode_except_illegal_o = !(OPTION_OPERAND_WIDTH==64);
-
-       `OR1K_OPCODE_ADDIC:
-	 decode_except_illegal_o = (FEATURE_ADDC=="NONE");
-
-       //`OR1K_OPCODE_MACRC, // Same as movhi - check!
-       `OR1K_OPCODE_MACI,
-	 `OR1K_OPCODE_MAC:
-	   decode_except_illegal_o = (FEATURE_MAC=="NONE");
-
-       `OR1K_OPCODE_MULI:
-	 decode_except_illegal_o = (FEATURE_MULTIPLIER=="NONE");
-
-       `OR1K_OPCODE_SHRTI:
-	 case(decode_insn_i[`OR1K_ALU_OPC_SECONDARY_SELECT])
-	   `OR1K_ALU_OPC_SECONDARY_SHRT_SLL,
-	   `OR1K_ALU_OPC_SECONDARY_SHRT_SRL:
-	     decode_except_illegal_o = 1'b0;
-	   `OR1K_ALU_OPC_SECONDARY_SHRT_SRA:
-	     decode_except_illegal_o = (FEATURE_SRA=="NONE");
-
-	   `OR1K_ALU_OPC_SECONDARY_SHRT_ROR:
-	     decode_except_illegal_o = (FEATURE_ROR=="NONE");
-	   default:
-	     decode_except_illegal_o = 1'b1;
-	 endcase // case (decode_insn_i[`OR1K_ALU_OPC_SECONDARY_SELECT])
-
-       `OR1K_OPCODE_ALU:
-	 case(decode_insn_i[`OR1K_ALU_OPC_SELECT])
-	   `OR1K_ALU_OPC_ADD,
-	   `OR1K_ALU_OPC_SUB,
-	   `OR1K_ALU_OPC_OR,
-	   `OR1K_ALU_OPC_XOR,
-	   `OR1K_ALU_OPC_AND:
-	     decode_except_illegal_o = 1'b0;
-	   `OR1K_ALU_OPC_CMOV:
-	     decode_except_illegal_o = (FEATURE_CMOV=="NONE");
-	   `OR1K_ALU_OPC_FFL1:
-	     decode_except_illegal_o = (FEATURE_FFL1=="NONE");
-	   `OR1K_ALU_OPC_DIV,
-	     `OR1K_ALU_OPC_DIVU:
-	       decode_except_illegal_o = (FEATURE_DIVIDER=="NONE");
-	   `OR1K_ALU_OPC_ADDC:
-	     decode_except_illegal_o = (FEATURE_ADDC=="NONE");
-	   `OR1K_ALU_OPC_MUL,
-	     `OR1K_ALU_OPC_MULU:
-	       decode_except_illegal_o = (FEATURE_MULTIPLIER=="NONE");
-	   `OR1K_ALU_OPC_EXTBH,
-	     `OR1K_ALU_OPC_EXTW:
-	       decode_except_illegal_o = (FEATURE_EXT=="NONE");
-	   `OR1K_ALU_OPC_SHRT:
-	     case(decode_insn_i[`OR1K_ALU_OPC_SECONDARY_SELECT])
-	       `OR1K_ALU_OPC_SECONDARY_SHRT_SLL,
-	       `OR1K_ALU_OPC_SECONDARY_SHRT_SRL:
-		 decode_except_illegal_o = 1'b0;
-	       `OR1K_ALU_OPC_SECONDARY_SHRT_SRA:
-		 decode_except_illegal_o = (FEATURE_SRA=="NONE");
-	       `OR1K_ALU_OPC_SECONDARY_SHRT_ROR:
-		 decode_except_illegal_o = (FEATURE_ROR=="NONE");
-	       default:
-		 decode_except_illegal_o = 1'b1;
-	     endcase // case (decode_insn_i[`OR1K_ALU_OPC_SECONDARY_SELECT])
-	   default:
-	     decode_except_illegal_o = 1'b1;
-	 endcase // case (decode_insn_i[`OR1K_ALU_OPC_SELECT])
-
-       `OR1K_OPCODE_SYSTRAPSYNC: begin
-	  if ((decode_insn_i[`OR1K_SYSTRAPSYNC_OPC_SELECT] ==
-	       `OR1K_SYSTRAPSYNC_OPC_SYSCALL &&
-	       FEATURE_SYSCALL=="ENABLED") ||
-	      (decode_insn_i[`OR1K_SYSTRAPSYNC_OPC_SELECT] ==
-	       `OR1K_SYSTRAPSYNC_OPC_TRAP &&
-	       FEATURE_TRAP=="ENABLED") ||
-	      (decode_insn_i[`OR1K_SYSTRAPSYNC_OPC_SELECT] ==
-	       `OR1K_SYSTRAPSYNC_OPC_MSYNC) ||
-	      (decode_insn_i[`OR1K_SYSTRAPSYNC_OPC_SELECT] ==
-	       `OR1K_SYSTRAPSYNC_OPC_PSYNC &&
-	       FEATURE_PSYNC!="NONE") ||
-	      (decode_insn_i[`OR1K_SYSTRAPSYNC_OPC_SELECT] ==
-	       `OR1K_SYSTRAPSYNC_OPC_CSYNC &&
-	       FEATURE_CSYNC!="NONE"))
-	    decode_except_illegal_o = 1'b0;
-	  else
-	    decode_except_illegal_o = 1'b1;
-       end // case: endcase...
-       default:
-	 decode_except_illegal_o = 1'b1;
-
-     endcase // case (decode_insn_i[`OR1K_OPCODE_SELECT])
-
-   // Adder control logic
-   // Subtract when comparing to check if equal
-   assign decode_adder_do_sub_o = (opc_insn == `OR1K_OPCODE_ALU &
-				   opc_alu == `OR1K_ALU_OPC_SUB) |
-				  decode_op_setflag_o;
-
-   // Generate carry-in select
-   assign decode_adder_do_carry_o = (FEATURE_ADDC!="NONE") &&
-				    ((opc_insn == `OR1K_OPCODE_ALU &
-				      opc_alu == `OR1K_ALU_OPC_ADDC) ||
-				     (opc_insn == `OR1K_OPCODE_ADDIC));
-
-endmodule // mor1kx_decode
+/* Generated by Yosys 0.9+932 (git sha1 db226870, gcc 7.4.0-1ubuntu1~18.04.1 -fPIC -Os) */
+
+(* dynports =  1  *)
+(* top =  1  *)
+(* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:25" *)
+module mor1kx_decode(clk, rst, decode_insn_i, decode_opc_alu_o, decode_opc_alu_secondary_o, decode_imm16_o, decode_immediate_o, decode_immediate_sel_o, decode_immjbr_upper_o, decode_rfd_adr_o, decode_rfa_adr_o, decode_rfb_adr_o, decode_rf_wb_o, decode_op_jbr_o, decode_op_jr_o, decode_op_jal_o, decode_op_bf_o, decode_op_bnf_o, decode_op_brcond_o, decode_op_branch_o, decode_op_alu_o, decode_op_lsu_load_o, decode_op_lsu_store_o, decode_op_lsu_atomic_o, decode_lsu_length_o, decode_lsu_zext_o, decode_op_mfspr_o, decode_op_mtspr_o, decode_op_rfe_o, decode_op_setflag_o, decode_op_add_o, decode_op_mul_o, decode_op_mul_signed_o, decode_op_mul_unsigned_o, decode_op_div_o, decode_op_div_signed_o, decode_op_div_unsigned_o, decode_op_shift_o, decode_op_ffl1_o, decode_op_movhi_o, decode_op_msync_o, decode_op_fpu_o, decode_adder_do_sub_o, decode_adder_do_carry_o, decode_except_illegal_o, decode_except_syscall_o, decode_except_trap_o, decode_opc_insn_o);
+  wire _000_;
+  wire _001_;
+  wire _002_;
+  wire _003_;
+  wire _004_;
+  wire _005_;
+  wire _006_;
+  wire _007_;
+  wire _008_;
+  wire _009_;
+  wire _010_;
+  wire _011_;
+  wire _012_;
+  wire _013_;
+  wire _014_;
+  wire _015_;
+  wire _016_;
+  wire _017_;
+  wire _018_;
+  wire _019_;
+  wire _020_;
+  wire _021_;
+  wire _022_;
+  wire _023_;
+  wire _024_;
+  wire _025_;
+  wire _026_;
+  wire _027_;
+  wire _028_;
+  wire _029_;
+  wire _030_;
+  wire _031_;
+  wire _032_;
+  wire _033_;
+  wire _034_;
+  wire _035_;
+  wire _036_;
+  wire _037_;
+  wire _038_;
+  wire _039_;
+  wire _040_;
+  wire _041_;
+  wire _042_;
+  wire _043_;
+  wire _044_;
+  wire _045_;
+  wire _046_;
+  wire _047_;
+  wire _048_;
+  wire _049_;
+  wire _050_;
+  wire _051_;
+  wire _052_;
+  wire _053_;
+  wire _054_;
+  wire _055_;
+  wire _056_;
+  wire _057_;
+  wire _058_;
+  wire _059_;
+  wire _060_;
+  wire _061_;
+  wire _062_;
+  wire _063_;
+  wire _064_;
+  wire _065_;
+  wire _066_;
+  wire _067_;
+  wire _068_;
+  wire _069_;
+  wire _070_;
+  wire _071_;
+  wire _072_;
+  wire _073_;
+  wire _074_;
+  wire _075_;
+  wire _076_;
+  wire _077_;
+  wire _078_;
+  wire _079_;
+  wire _080_;
+  wire _081_;
+  wire _082_;
+  wire _083_;
+  wire _084_;
+  wire _085_;
+  wire _086_;
+  wire _087_;
+  wire _088_;
+  wire _089_;
+  wire _090_;
+  wire _091_;
+  wire _092_;
+  wire _093_;
+  wire _094_;
+  wire _095_;
+  wire _096_;
+  wire _097_;
+  wire _098_;
+  wire _099_;
+  wire _100_;
+  wire _101_;
+  wire _102_;
+  wire _103_;
+  wire _104_;
+  wire _105_;
+  wire _106_;
+  wire _107_;
+  wire _108_;
+  wire _109_;
+  wire _110_;
+  wire _111_;
+  wire _112_;
+  wire _113_;
+  wire _114_;
+  wire _115_;
+  wire _116_;
+  wire _117_;
+  wire _118_;
+  wire _119_;
+  wire _120_;
+  wire _121_;
+  wire _122_;
+  wire _123_;
+  wire _124_;
+  wire _125_;
+  wire _126_;
+  wire _127_;
+  wire _128_;
+  wire _129_;
+  wire _130_;
+  wire _131_;
+  wire _132_;
+  wire _133_;
+  wire _134_;
+  wire _135_;
+  wire _136_;
+  wire _137_;
+  wire _138_;
+  wire _139_;
+  wire _140_;
+  wire _141_;
+  wire _142_;
+  wire _143_;
+  wire _144_;
+  wire _145_;
+  wire _146_;
+  wire _147_;
+  wire _148_;
+  wire _149_;
+  wire _150_;
+  wire _151_;
+  wire _152_;
+  wire _153_;
+  wire _154_;
+  wire _155_;
+  wire _156_;
+  wire _157_;
+  wire _158_;
+  wire _159_;
+  wire _160_;
+  wire _161_;
+  wire _162_;
+  wire _163_;
+  wire _164_;
+  wire _165_;
+  wire _166_;
+  wire _167_;
+  wire _168_;
+  wire _169_;
+  wire _170_;
+  wire _171_;
+  wire _172_;
+  wire _173_;
+  wire _174_;
+  wire _175_;
+  wire _176_;
+  wire _177_;
+  wire _178_;
+  wire _179_;
+  wire _180_;
+  wire _181_;
+  wire _182_;
+  wire _183_;
+  wire _184_;
+  wire _185_;
+  wire _186_;
+  wire _187_;
+  wire _188_;
+  wire _189_;
+  wire _190_;
+  wire _191_;
+  wire _192_;
+  wire _193_;
+  wire _194_;
+  wire _195_;
+  wire _196_;
+  wire _197_;
+  wire _198_;
+  wire _199_;
+  wire _200_;
+  wire _201_;
+  wire _202_;
+  wire _203_;
+  wire _204_;
+  wire _205_;
+  wire _206_;
+  wire _207_;
+  wire _208_;
+  wire _209_;
+  wire _210_;
+  wire _211_;
+  wire _212_;
+  wire _213_;
+  wire _214_;
+  wire _215_;
+  wire _216_;
+  wire _217_;
+  wire _218_;
+  wire _219_;
+  wire _220_;
+  wire _221_;
+  wire _222_;
+  wire _223_;
+  wire _224_;
+  wire _225_;
+  wire _226_;
+  wire _227_;
+  wire _228_;
+  wire _229_;
+  wire _230_;
+  wire _231_;
+  wire _232_;
+  wire _233_;
+  wire _234_;
+  wire _235_;
+  wire _236_;
+  wire _237_;
+  wire _238_;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:62" *)
+  input clk;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:125" *)
+  output decode_adder_do_carry_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:124" *)
+  output decode_adder_do_sub_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:128" *)
+  output decode_except_illegal_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:129" *)
+  output decode_except_syscall_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:130" *)
+  output decode_except_trap_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:72" *)
+  output [15:0] decode_imm16_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:73" *)
+  output [31:0] decode_immediate_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:74" *)
+  output decode_immediate_sel_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:77" *)
+  output [9:0] decode_immjbr_upper_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:66" *)
+  input [31:0] decode_insn_i;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:99" *)
+  output [1:0] decode_lsu_length_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:100" *)
+  output decode_lsu_zext_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:107" *)
+  output decode_op_add_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:94" *)
+  output decode_op_alu_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:89" *)
+  output decode_op_bf_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:90" *)
+  output decode_op_bnf_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:92" *)
+  output decode_op_branch_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:91" *)
+  output decode_op_brcond_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:111" *)
+  output decode_op_div_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:112" *)
+  output decode_op_div_signed_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:113" *)
+  output decode_op_div_unsigned_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:115" *)
+  output decode_op_ffl1_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:120" *)
+  output [7:0] decode_op_fpu_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:88" *)
+  output decode_op_jal_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:86" *)
+  output decode_op_jbr_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:87" *)
+  output decode_op_jr_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:98" *)
+  output decode_op_lsu_atomic_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:96" *)
+  output decode_op_lsu_load_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:97" *)
+  output decode_op_lsu_store_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:102" *)
+  output decode_op_mfspr_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:116" *)
+  output decode_op_movhi_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:119" *)
+  output decode_op_msync_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:103" *)
+  output decode_op_mtspr_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:108" *)
+  output decode_op_mul_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:109" *)
+  output decode_op_mul_signed_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:110" *)
+  output decode_op_mul_unsigned_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:105" *)
+  output decode_op_rfe_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:106" *)
+  output decode_op_setflag_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:114" *)
+  output decode_op_shift_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:69" *)
+  output [3:0] decode_opc_alu_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:70" *)
+  output [3:0] decode_opc_alu_secondary_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:132" *)
+  output [5:0] decode_opc_insn_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:84" *)
+  output decode_rf_wb_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:81" *)
+  output [4:0] decode_rfa_adr_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:82" *)
+  output [4:0] decode_rfb_adr_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:80" *)
+  output [4:0] decode_rfd_adr_o;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:142" *)
+  wire [31:0] imm_high;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:143" *)
+  wire imm_high_sel;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:138" *)
+  wire [31:0] imm_sext;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:140" *)
+  wire [31:0] imm_zext;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:136" *)
+  wire [3:0] opc_alu;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:135" *)
+  wire [5:0] opc_insn;
+  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:63" *)
+  input rst;
+  NOT _239_ (
+    .A(decode_insn_i[23]),
+    .Y(_000_)
+  );
+  NOT _240_ (
+    .A(decode_insn_i[25]),
+    .Y(_001_)
+  );
+  NOT _241_ (
+    .A(decode_insn_i[28]),
+    .Y(_002_)
+  );
+  NOT _242_ (
+    .A(decode_insn_i[29]),
+    .Y(_003_)
+  );
+  NOT _243_ (
+    .A(decode_insn_i[27]),
+    .Y(_004_)
+  );
+  NOT _244_ (
+    .A(decode_insn_i[6]),
+    .Y(_005_)
+  );
+  NOT _245_ (
+    .A(decode_insn_i[8]),
+    .Y(_006_)
+  );
+  NOT _246_ (
+    .A(decode_insn_i[7]),
+    .Y(_007_)
+  );
+  NOT _247_ (
+    .A(decode_insn_i[26]),
+    .Y(_008_)
+  );
+  NOT _248_ (
+    .A(decode_insn_i[31]),
+    .Y(_009_)
+  );
+  NOT _249_ (
+    .A(decode_insn_i[1]),
+    .Y(_010_)
+  );
+  NOT _250_ (
+    .A(decode_insn_i[2]),
+    .Y(_011_)
+  );
+  NOT _251_ (
+    .A(decode_insn_i[3]),
+    .Y(_012_)
+  );
+  NOT _252_ (
+    .A(decode_insn_i[0]),
+    .Y(_013_)
+  );
+  NOT _253_ (
+    .A(decode_insn_i[30]),
+    .Y(_014_)
+  );
+  NOT _254_ (
+    .A(decode_insn_i[22]),
+    .Y(_015_)
+  );
+  NOT _255_ (
+    .A(decode_insn_i[4]),
+    .Y(_016_)
+  );
+  NOT _256_ (
+    .A(decode_insn_i[5]),
+    .Y(_017_)
+  );
+  NOT _257_ (
+    .A(decode_insn_i[9]),
+    .Y(_018_)
+  );
+  NOT _258_ (
+    .A(decode_insn_i[10]),
+    .Y(_019_)
+  );
+  NOR _259_ (
+    .A(_004_),
+    .B(decode_insn_i[26]),
+    .Y(_020_)
+  );
+  NAND _260_ (
+    .A(decode_insn_i[27]),
+    .B(_008_),
+    .Y(_021_)
+  );
+  NOR _261_ (
+    .A(decode_insn_i[31]),
+    .B(_014_),
+    .Y(_022_)
+  );
+  NOR _262_ (
+    .A(decode_insn_i[28]),
+    .B(decode_insn_i[29]),
+    .Y(_023_)
+  );
+  NAND _263_ (
+    .A(_002_),
+    .B(_003_),
+    .Y(_024_)
+  );
+  NOR _264_ (
+    .A(_021_),
+    .B(_024_),
+    .Y(_025_)
+  );
+  NAND _265_ (
+    .A(_022_),
+    .B(_025_),
+    .Y(_026_)
+  );
+  NOR _266_ (
+    .A(decode_insn_i[27]),
+    .B(_008_),
+    .Y(_027_)
+  );
+  NAND _267_ (
+    .A(_004_),
+    .B(decode_insn_i[26]),
+    .Y(_028_)
+  );
+  NOR _268_ (
+    .A(decode_insn_i[31]),
+    .B(decode_insn_i[30]),
+    .Y(_029_)
+  );
+  NAND _269_ (
+    .A(_009_),
+    .B(_014_),
+    .Y(_030_)
+  );
+  NOR _270_ (
+    .A(_024_),
+    .B(_028_),
+    .Y(_031_)
+  );
+  NAND _271_ (
+    .A(_029_),
+    .B(_031_),
+    .Y(_032_)
+  );
+  NAND _272_ (
+    .A(_026_),
+    .B(_032_),
+    .Y(decode_op_jal_o)
+  );
+  NOR _273_ (
+    .A(_004_),
+    .B(_008_),
+    .Y(_033_)
+  );
+  NAND _274_ (
+    .A(decode_insn_i[27]),
+    .B(decode_insn_i[26]),
+    .Y(_034_)
+  );
+  NOR _275_ (
+    .A(_009_),
+    .B(decode_insn_i[30]),
+    .Y(_035_)
+  );
+  NAND _276_ (
+    .A(decode_insn_i[31]),
+    .B(_014_),
+    .Y(_036_)
+  );
+  NAND _277_ (
+    .A(decode_insn_i[28]),
+    .B(decode_insn_i[29]),
+    .Y(_037_)
+  );
+  NOR _278_ (
+    .A(_036_),
+    .B(_037_),
+    .Y(_038_)
+  );
+  NAND _279_ (
+    .A(_033_),
+    .B(_038_),
+    .Y(_039_)
+  );
+  NOT _280_ (
+    .A(_039_),
+    .Y(_040_)
+  );
+  NOR _281_ (
+    .A(decode_insn_i[28]),
+    .B(_003_),
+    .Y(_041_)
+  );
+  NAND _282_ (
+    .A(_002_),
+    .B(decode_insn_i[29]),
+    .Y(_042_)
+  );
+  NOR _283_ (
+    .A(_028_),
+    .B(_042_),
+    .Y(_043_)
+  );
+  NAND _284_ (
+    .A(_027_),
+    .B(_041_),
+    .Y(_044_)
+  );
+  NOR _285_ (
+    .A(_009_),
+    .B(_014_),
+    .Y(_045_)
+  );
+  NAND _286_ (
+    .A(decode_insn_i[31]),
+    .B(decode_insn_i[30]),
+    .Y(_046_)
+  );
+  NOR _287_ (
+    .A(_044_),
+    .B(_046_),
+    .Y(_047_)
+  );
+  NOR _288_ (
+    .A(_040_),
+    .B(_047_),
+    .Y(_048_)
+  );
+  NOT _289_ (
+    .A(_048_),
+    .Y(decode_op_setflag_o)
+  );
+  NOR _290_ (
+    .A(_002_),
+    .B(decode_insn_i[29]),
+    .Y(_049_)
+  );
+  NAND _291_ (
+    .A(decode_insn_i[28]),
+    .B(_003_),
+    .Y(_050_)
+  );
+  NOR _292_ (
+    .A(_021_),
+    .B(_050_),
+    .Y(_051_)
+  );
+  NAND _293_ (
+    .A(_029_),
+    .B(_051_),
+    .Y(_052_)
+  );
+  NOT _294_ (
+    .A(_052_),
+    .Y(decode_op_movhi_o)
+  );
+  NAND _295_ (
+    .A(_029_),
+    .B(_043_),
+    .Y(_053_)
+  );
+  NOT _296_ (
+    .A(_053_),
+    .Y(decode_op_rfe_o)
+  );
+  NOR _297_ (
+    .A(decode_insn_i[27]),
+    .B(decode_insn_i[26]),
+    .Y(_054_)
+  );
+  NAND _298_ (
+    .A(_004_),
+    .B(_008_),
+    .Y(_055_)
+  );
+  NAND _299_ (
+    .A(_023_),
+    .B(_054_),
+    .Y(_056_)
+  );
+  NOT _300_ (
+    .A(_056_),
+    .Y(_057_)
+  );
+  NAND _301_ (
+    .A(_045_),
+    .B(_057_),
+    .Y(_058_)
+  );
+  NOT _302_ (
+    .A(_058_),
+    .Y(decode_op_mtspr_o)
+  );
+  NAND _303_ (
+    .A(_004_),
+    .B(_038_),
+    .Y(_059_)
+  );
+  NOR _304_ (
+    .A(_008_),
+    .B(_059_),
+    .Y(decode_op_mfspr_o)
+  );
+  NOR _305_ (
+    .A(_024_),
+    .B(_034_),
+    .Y(_060_)
+  );
+  NAND _306_ (
+    .A(_023_),
+    .B(_033_),
+    .Y(_061_)
+  );
+  NOR _307_ (
+    .A(_030_),
+    .B(_061_),
+    .Y(decode_op_bnf_o)
+  );
+  NOR _308_ (
+    .A(_050_),
+    .B(_055_),
+    .Y(_062_)
+  );
+  NAND _309_ (
+    .A(_049_),
+    .B(_054_),
+    .Y(_063_)
+  );
+  NOR _310_ (
+    .A(_030_),
+    .B(_063_),
+    .Y(decode_op_bf_o)
+  );
+  NOR _311_ (
+    .A(_021_),
+    .B(_036_),
+    .Y(_064_)
+  );
+  NAND _312_ (
+    .A(_020_),
+    .B(_035_),
+    .Y(_065_)
+  );
+  NAND _313_ (
+    .A(_020_),
+    .B(_038_),
+    .Y(_066_)
+  );
+  NOR _314_ (
+    .A(_042_),
+    .B(_055_),
+    .Y(_067_)
+  );
+  NAND _315_ (
+    .A(_041_),
+    .B(_054_),
+    .Y(_068_)
+  );
+  NOR _316_ (
+    .A(_046_),
+    .B(_068_),
+    .Y(_069_)
+  );
+  NAND _317_ (
+    .A(_045_),
+    .B(_067_),
+    .Y(_070_)
+  );
+  NOR _318_ (
+    .A(decode_insn_i[2]),
+    .B(_012_),
+    .Y(_071_)
+  );
+  NAND _319_ (
+    .A(_013_),
+    .B(_071_),
+    .Y(_072_)
+  );
+  NOR _320_ (
+    .A(decode_insn_i[1]),
+    .B(_072_),
+    .Y(_073_)
+  );
+  NAND _321_ (
+    .A(_069_),
+    .B(_073_),
+    .Y(_074_)
+  );
+  NAND _322_ (
+    .A(_066_),
+    .B(_070_),
+    .Y(_075_)
+  );
+  NAND _323_ (
+    .A(_066_),
+    .B(_074_),
+    .Y(decode_op_shift_o)
+  );
+  NAND _324_ (
+    .A(decode_insn_i[3]),
+    .B(_069_),
+    .Y(_076_)
+  );
+  NOT _325_ (
+    .A(_076_),
+    .Y(_077_)
+  );
+  NAND _326_ (
+    .A(decode_insn_i[1]),
+    .B(decode_insn_i[0]),
+    .Y(_078_)
+  );
+  NOT _327_ (
+    .A(_078_),
+    .Y(_079_)
+  );
+  NAND _328_ (
+    .A(decode_insn_i[2]),
+    .B(_079_),
+    .Y(_080_)
+  );
+  NOR _329_ (
+    .A(_076_),
+    .B(_080_),
+    .Y(decode_op_ffl1_o)
+  );
+  NAND _330_ (
+    .A(_029_),
+    .B(_067_),
+    .Y(_081_)
+  );
+  NOR _331_ (
+    .A(decode_insn_i[23]),
+    .B(decode_insn_i[24]),
+    .Y(_082_)
+  );
+  NAND _332_ (
+    .A(_001_),
+    .B(_082_),
+    .Y(_083_)
+  );
+  NOR _333_ (
+    .A(_081_),
+    .B(_083_),
+    .Y(decode_except_syscall_o)
+  );
+  NOR _334_ (
+    .A(decode_insn_i[23]),
+    .B(decode_insn_i[25]),
+    .Y(_084_)
+  );
+  NAND _335_ (
+    .A(decode_insn_i[24]),
+    .B(_084_),
+    .Y(_085_)
+  );
+  NOR _336_ (
+    .A(_081_),
+    .B(_085_),
+    .Y(decode_except_trap_o)
+  );
+  NOR _337_ (
+    .A(_034_),
+    .B(_042_),
+    .Y(_086_)
+  );
+  NAND _338_ (
+    .A(_033_),
+    .B(_041_),
+    .Y(_087_)
+  );
+  NAND _339_ (
+    .A(_022_),
+    .B(_086_),
+    .Y(_088_)
+  );
+  NAND _340_ (
+    .A(decode_insn_i[28]),
+    .B(_033_),
+    .Y(_089_)
+  );
+  NOR _341_ (
+    .A(decode_insn_i[29]),
+    .B(_036_),
+    .Y(_090_)
+  );
+  NAND _342_ (
+    .A(_089_),
+    .B(_090_),
+    .Y(_091_)
+  );
+  NAND _343_ (
+    .A(_088_),
+    .B(_091_),
+    .Y(decode_op_lsu_load_o)
+  );
+  NOR _344_ (
+    .A(_046_),
+    .B(_061_),
+    .Y(_092_)
+  );
+  NAND _345_ (
+    .A(_045_),
+    .B(_060_),
+    .Y(_093_)
+  );
+  NOR _346_ (
+    .A(_050_),
+    .B(_054_),
+    .Y(_094_)
+  );
+  NAND _347_ (
+    .A(_049_),
+    .B(_055_),
+    .Y(_095_)
+  );
+  NOR _348_ (
+    .A(_046_),
+    .B(_095_),
+    .Y(_096_)
+  );
+  NOR _349_ (
+    .A(_092_),
+    .B(_096_),
+    .Y(_097_)
+  );
+  NOT _350_ (
+    .A(_097_),
+    .Y(decode_op_lsu_store_o)
+  );
+  NAND _351_ (
+    .A(_088_),
+    .B(_093_),
+    .Y(decode_op_lsu_atomic_o)
+  );
+  NAND _352_ (
+    .A(decode_insn_i[25]),
+    .B(_082_),
+    .Y(_098_)
+  );
+  NOR _353_ (
+    .A(_081_),
+    .B(_098_),
+    .Y(decode_op_msync_o)
+  );
+  NOR _354_ (
+    .A(_042_),
+    .B(_065_),
+    .Y(_099_)
+  );
+  NAND _355_ (
+    .A(_041_),
+    .B(_064_),
+    .Y(_100_)
+  );
+  NOR _356_ (
+    .A(_036_),
+    .B(_044_),
+    .Y(_101_)
+  );
+  NAND _357_ (
+    .A(_035_),
+    .B(_043_),
+    .Y(_102_)
+  );
+  NOR _358_ (
+    .A(_099_),
+    .B(_101_),
+    .Y(_103_)
+  );
+  NAND _359_ (
+    .A(_100_),
+    .B(_102_),
+    .Y(_104_)
+  );
+  NOR _360_ (
+    .A(_036_),
+    .B(_087_),
+    .Y(_105_)
+  );
+  NAND _361_ (
+    .A(_035_),
+    .B(_086_),
+    .Y(_106_)
+  );
+  NOR _362_ (
+    .A(_104_),
+    .B(_105_),
+    .Y(_107_)
+  );
+  NAND _363_ (
+    .A(_070_),
+    .B(_107_),
+    .Y(decode_op_alu_o)
+  );
+  NAND _364_ (
+    .A(_012_),
+    .B(_069_),
+    .Y(_108_)
+  );
+  NOR _365_ (
+    .A(decode_insn_i[2]),
+    .B(_108_),
+    .Y(_109_)
+  );
+  NAND _366_ (
+    .A(_078_),
+    .B(_109_),
+    .Y(_110_)
+  );
+  NOR _367_ (
+    .A(_034_),
+    .B(_050_),
+    .Y(_111_)
+  );
+  NAND _368_ (
+    .A(_033_),
+    .B(_049_),
+    .Y(_112_)
+  );
+  NAND _369_ (
+    .A(_068_),
+    .B(_112_),
+    .Y(_113_)
+  );
+  NAND _370_ (
+    .A(_035_),
+    .B(_113_),
+    .Y(_114_)
+  );
+  NAND _371_ (
+    .A(_110_),
+    .B(_114_),
+    .Y(decode_op_add_o)
+  );
+  NOR _372_ (
+    .A(decode_insn_i[26]),
+    .B(_059_),
+    .Y(_115_)
+  );
+  NOR _373_ (
+    .A(_010_),
+    .B(decode_insn_i[0]),
+    .Y(_116_)
+  );
+  NAND _374_ (
+    .A(decode_insn_i[2]),
+    .B(_116_),
+    .Y(_117_)
+  );
+  NOR _375_ (
+    .A(_108_),
+    .B(_117_),
+    .Y(_118_)
+  );
+  NOR _376_ (
+    .A(_115_),
+    .B(_118_),
+    .Y(_119_)
+  );
+  NOT _377_ (
+    .A(_119_),
+    .Y(decode_op_mul_signed_o)
+  );
+  NOR _378_ (
+    .A(decode_insn_i[2]),
+    .B(_013_),
+    .Y(_120_)
+  );
+  NOR _379_ (
+    .A(decode_insn_i[2]),
+    .B(_078_),
+    .Y(_121_)
+  );
+  NAND _380_ (
+    .A(_077_),
+    .B(_121_),
+    .Y(_122_)
+  );
+  NOT _381_ (
+    .A(_122_),
+    .Y(decode_op_mul_unsigned_o)
+  );
+  NOR _382_ (
+    .A(decode_insn_i[1]),
+    .B(_076_),
+    .Y(_123_)
+  );
+  NAND _383_ (
+    .A(_120_),
+    .B(_123_),
+    .Y(_124_)
+  );
+  NOT _384_ (
+    .A(_124_),
+    .Y(decode_op_div_signed_o)
+  );
+  NAND _385_ (
+    .A(_071_),
+    .B(_116_),
+    .Y(_125_)
+  );
+  NOT _386_ (
+    .A(_125_),
+    .Y(_126_)
+  );
+  NAND _387_ (
+    .A(_069_),
+    .B(_126_),
+    .Y(_127_)
+  );
+  NOT _388_ (
+    .A(_127_),
+    .Y(decode_op_div_unsigned_o)
+  );
+  NOR _389_ (
+    .A(decode_insn_i[21]),
+    .B(decode_op_jal_o),
+    .Y(_128_)
+  );
+  NOT _390_ (
+    .A(_128_),
+    .Y(decode_rfd_adr_o[0])
+  );
+  NOR _391_ (
+    .A(_015_),
+    .B(decode_op_jal_o),
+    .Y(decode_rfd_adr_o[1])
+  );
+  NOR _392_ (
+    .A(_000_),
+    .B(decode_op_jal_o),
+    .Y(decode_rfd_adr_o[2])
+  );
+  NOR _393_ (
+    .A(decode_insn_i[24]),
+    .B(decode_op_jal_o),
+    .Y(_129_)
+  );
+  NOT _394_ (
+    .A(_129_),
+    .Y(decode_rfd_adr_o[3])
+  );
+  NOR _395_ (
+    .A(_001_),
+    .B(decode_op_jal_o),
+    .Y(decode_rfd_adr_o[4])
+  );
+  NOR _396_ (
+    .A(decode_op_mtspr_o),
+    .B(decode_op_lsu_store_o),
+    .Y(_130_)
+  );
+  NAND _397_ (
+    .A(_058_),
+    .B(_097_),
+    .Y(_131_)
+  );
+  NAND _398_ (
+    .A(decode_insn_i[11]),
+    .B(_130_),
+    .Y(_132_)
+  );
+  NAND _399_ (
+    .A(decode_insn_i[21]),
+    .B(_131_),
+    .Y(_133_)
+  );
+  NAND _400_ (
+    .A(_132_),
+    .B(_133_),
+    .Y(decode_imm16_o[11])
+  );
+  NOT _401_ (
+    .A(decode_imm16_o[11]),
+    .Y(_134_)
+  );
+  NAND _402_ (
+    .A(decode_insn_i[12]),
+    .B(_130_),
+    .Y(_135_)
+  );
+  NAND _403_ (
+    .A(decode_insn_i[22]),
+    .B(_131_),
+    .Y(_136_)
+  );
+  NAND _404_ (
+    .A(_135_),
+    .B(_136_),
+    .Y(decode_imm16_o[12])
+  );
+  NOT _405_ (
+    .A(decode_imm16_o[12]),
+    .Y(_137_)
+  );
+  NAND _406_ (
+    .A(decode_insn_i[13]),
+    .B(_130_),
+    .Y(_138_)
+  );
+  NAND _407_ (
+    .A(decode_insn_i[23]),
+    .B(_131_),
+    .Y(_139_)
+  );
+  NAND _408_ (
+    .A(_138_),
+    .B(_139_),
+    .Y(decode_imm16_o[13])
+  );
+  NOT _409_ (
+    .A(decode_imm16_o[13]),
+    .Y(_140_)
+  );
+  NAND _410_ (
+    .A(decode_insn_i[14]),
+    .B(_130_),
+    .Y(_141_)
+  );
+  NAND _411_ (
+    .A(decode_insn_i[24]),
+    .B(_131_),
+    .Y(_142_)
+  );
+  NAND _412_ (
+    .A(_141_),
+    .B(_142_),
+    .Y(decode_imm16_o[14])
+  );
+  NOT _413_ (
+    .A(decode_imm16_o[14]),
+    .Y(_143_)
+  );
+  NAND _414_ (
+    .A(decode_insn_i[15]),
+    .B(_130_),
+    .Y(_144_)
+  );
+  NOT _415_ (
+    .A(_144_),
+    .Y(_145_)
+  );
+  NOR _416_ (
+    .A(_001_),
+    .B(_130_),
+    .Y(_146_)
+  );
+  NOR _417_ (
+    .A(_145_),
+    .B(_146_),
+    .Y(_147_)
+  );
+  NOT _418_ (
+    .A(_147_),
+    .Y(decode_imm16_o[15])
+  );
+  NAND _419_ (
+    .A(_058_),
+    .B(_103_),
+    .Y(_148_)
+  );
+  NAND _420_ (
+    .A(_035_),
+    .B(_103_),
+    .Y(_149_)
+  );
+  NOR _421_ (
+    .A(_096_),
+    .B(decode_op_lsu_atomic_o),
+    .Y(_150_)
+  );
+  NAND _422_ (
+    .A(_149_),
+    .B(_150_),
+    .Y(_151_)
+  );
+  NOR _423_ (
+    .A(_148_),
+    .B(_151_),
+    .Y(_152_)
+  );
+  NOR _424_ (
+    .A(_013_),
+    .B(_152_),
+    .Y(decode_immediate_o[0])
+  );
+  NOR _425_ (
+    .A(_010_),
+    .B(_152_),
+    .Y(decode_immediate_o[1])
+  );
+  NOR _426_ (
+    .A(_011_),
+    .B(_152_),
+    .Y(decode_immediate_o[2])
+  );
+  NOR _427_ (
+    .A(_012_),
+    .B(_152_),
+    .Y(decode_immediate_o[3])
+  );
+  NOR _428_ (
+    .A(_016_),
+    .B(_152_),
+    .Y(decode_immediate_o[4])
+  );
+  NOR _429_ (
+    .A(_017_),
+    .B(_152_),
+    .Y(decode_immediate_o[5])
+  );
+  NOR _430_ (
+    .A(_005_),
+    .B(_152_),
+    .Y(decode_immediate_o[6])
+  );
+  NOR _431_ (
+    .A(_007_),
+    .B(_152_),
+    .Y(decode_immediate_o[7])
+  );
+  NOR _432_ (
+    .A(_006_),
+    .B(_152_),
+    .Y(decode_immediate_o[8])
+  );
+  NOR _433_ (
+    .A(_018_),
+    .B(_152_),
+    .Y(decode_immediate_o[9])
+  );
+  NOR _434_ (
+    .A(_019_),
+    .B(_152_),
+    .Y(decode_immediate_o[10])
+  );
+  NOR _435_ (
+    .A(_134_),
+    .B(_152_),
+    .Y(decode_immediate_o[11])
+  );
+  NOR _436_ (
+    .A(_137_),
+    .B(_152_),
+    .Y(decode_immediate_o[12])
+  );
+  NOR _437_ (
+    .A(_140_),
+    .B(_152_),
+    .Y(decode_immediate_o[13])
+  );
+  NOR _438_ (
+    .A(_143_),
+    .B(_152_),
+    .Y(decode_immediate_o[14])
+  );
+  NOR _439_ (
+    .A(_147_),
+    .B(_152_),
+    .Y(decode_immediate_o[15])
+  );
+  NAND _440_ (
+    .A(decode_imm16_o[15]),
+    .B(_151_),
+    .Y(_153_)
+  );
+  NAND _441_ (
+    .A(decode_insn_i[0]),
+    .B(_152_),
+    .Y(_154_)
+  );
+  NAND _442_ (
+    .A(_153_),
+    .B(_154_),
+    .Y(decode_immediate_o[16])
+  );
+  NAND _443_ (
+    .A(decode_insn_i[1]),
+    .B(_152_),
+    .Y(_155_)
+  );
+  NAND _444_ (
+    .A(_153_),
+    .B(_155_),
+    .Y(decode_immediate_o[17])
+  );
+  NAND _445_ (
+    .A(decode_insn_i[2]),
+    .B(_152_),
+    .Y(_156_)
+  );
+  NAND _446_ (
+    .A(_153_),
+    .B(_156_),
+    .Y(decode_immediate_o[18])
+  );
+  NAND _447_ (
+    .A(decode_insn_i[3]),
+    .B(_152_),
+    .Y(_157_)
+  );
+  NAND _448_ (
+    .A(_153_),
+    .B(_157_),
+    .Y(decode_immediate_o[19])
+  );
+  NAND _449_ (
+    .A(decode_insn_i[4]),
+    .B(_152_),
+    .Y(_158_)
+  );
+  NAND _450_ (
+    .A(_153_),
+    .B(_158_),
+    .Y(decode_immediate_o[20])
+  );
+  NAND _451_ (
+    .A(decode_insn_i[5]),
+    .B(_152_),
+    .Y(_159_)
+  );
+  NAND _452_ (
+    .A(_153_),
+    .B(_159_),
+    .Y(decode_immediate_o[21])
+  );
+  NAND _453_ (
+    .A(decode_insn_i[6]),
+    .B(_152_),
+    .Y(_160_)
+  );
+  NAND _454_ (
+    .A(_153_),
+    .B(_160_),
+    .Y(decode_immediate_o[22])
+  );
+  NAND _455_ (
+    .A(decode_insn_i[7]),
+    .B(_152_),
+    .Y(_161_)
+  );
+  NAND _456_ (
+    .A(_153_),
+    .B(_161_),
+    .Y(decode_immediate_o[23])
+  );
+  NAND _457_ (
+    .A(decode_insn_i[8]),
+    .B(_152_),
+    .Y(_162_)
+  );
+  NAND _458_ (
+    .A(_153_),
+    .B(_162_),
+    .Y(decode_immediate_o[24])
+  );
+  NAND _459_ (
+    .A(decode_insn_i[9]),
+    .B(_152_),
+    .Y(_163_)
+  );
+  NAND _460_ (
+    .A(_153_),
+    .B(_163_),
+    .Y(decode_immediate_o[25])
+  );
+  NAND _461_ (
+    .A(decode_insn_i[10]),
+    .B(_152_),
+    .Y(_164_)
+  );
+  NAND _462_ (
+    .A(_153_),
+    .B(_164_),
+    .Y(decode_immediate_o[26])
+  );
+  NAND _463_ (
+    .A(decode_imm16_o[11]),
+    .B(_152_),
+    .Y(_165_)
+  );
+  NAND _464_ (
+    .A(_153_),
+    .B(_165_),
+    .Y(decode_immediate_o[27])
+  );
+  NAND _465_ (
+    .A(decode_imm16_o[12]),
+    .B(_152_),
+    .Y(_166_)
+  );
+  NAND _466_ (
+    .A(_153_),
+    .B(_166_),
+    .Y(decode_immediate_o[28])
+  );
+  NAND _467_ (
+    .A(decode_imm16_o[13]),
+    .B(_152_),
+    .Y(_167_)
+  );
+  NAND _468_ (
+    .A(_153_),
+    .B(_167_),
+    .Y(decode_immediate_o[29])
+  );
+  NAND _469_ (
+    .A(decode_imm16_o[14]),
+    .B(_152_),
+    .Y(_168_)
+  );
+  NAND _470_ (
+    .A(_153_),
+    .B(_168_),
+    .Y(decode_immediate_o[30])
+  );
+  NOR _471_ (
+    .A(_147_),
+    .B(_148_),
+    .Y(decode_immediate_o[31])
+  );
+  NAND _472_ (
+    .A(_013_),
+    .B(_102_),
+    .Y(_169_)
+  );
+  NOR _473_ (
+    .A(_105_),
+    .B(_169_),
+    .Y(_170_)
+  );
+  NOR _474_ (
+    .A(_099_),
+    .B(_170_),
+    .Y(decode_opc_alu_o[0])
+  );
+  NAND _475_ (
+    .A(decode_insn_i[1]),
+    .B(_106_),
+    .Y(_171_)
+  );
+  NOT _476_ (
+    .A(_171_),
+    .Y(_172_)
+  );
+  NOR _477_ (
+    .A(_101_),
+    .B(_172_),
+    .Y(_173_)
+  );
+  NOR _478_ (
+    .A(_099_),
+    .B(_173_),
+    .Y(decode_opc_alu_o[1])
+  );
+  NOR _479_ (
+    .A(decode_insn_i[2]),
+    .B(_105_),
+    .Y(_174_)
+  );
+  NOR _480_ (
+    .A(_101_),
+    .B(_174_),
+    .Y(_175_)
+  );
+  NOR _481_ (
+    .A(_099_),
+    .B(_175_),
+    .Y(_176_)
+  );
+  NOT _482_ (
+    .A(_176_),
+    .Y(decode_opc_alu_o[2])
+  );
+  NAND _483_ (
+    .A(decode_insn_i[3]),
+    .B(_107_),
+    .Y(_177_)
+  );
+  NOT _484_ (
+    .A(_177_),
+    .Y(decode_opc_alu_o[3])
+  );
+  NAND _485_ (
+    .A(decode_insn_i[6]),
+    .B(_048_),
+    .Y(_178_)
+  );
+  NAND _486_ (
+    .A(decode_insn_i[21]),
+    .B(decode_op_setflag_o),
+    .Y(_179_)
+  );
+  NAND _487_ (
+    .A(_178_),
+    .B(_179_),
+    .Y(decode_opc_alu_secondary_o[0])
+  );
+  NAND _488_ (
+    .A(decode_insn_i[7]),
+    .B(_048_),
+    .Y(_180_)
+  );
+  NAND _489_ (
+    .A(decode_insn_i[22]),
+    .B(decode_op_setflag_o),
+    .Y(_181_)
+  );
+  NAND _490_ (
+    .A(_180_),
+    .B(_181_),
+    .Y(decode_opc_alu_secondary_o[1])
+  );
+  NAND _491_ (
+    .A(decode_insn_i[8]),
+    .B(_048_),
+    .Y(_182_)
+  );
+  NAND _492_ (
+    .A(decode_insn_i[23]),
+    .B(decode_op_setflag_o),
+    .Y(_183_)
+  );
+  NAND _493_ (
+    .A(_182_),
+    .B(_183_),
+    .Y(decode_opc_alu_secondary_o[2])
+  );
+  NAND _494_ (
+    .A(decode_insn_i[24]),
+    .B(decode_op_setflag_o),
+    .Y(_184_)
+  );
+  NOT _495_ (
+    .A(_184_),
+    .Y(decode_opc_alu_secondary_o[3])
+  );
+  NAND _496_ (
+    .A(_027_),
+    .B(_049_),
+    .Y(_185_)
+  );
+  NAND _497_ (
+    .A(_056_),
+    .B(_185_),
+    .Y(_186_)
+  );
+  NOR _498_ (
+    .A(_060_),
+    .B(_062_),
+    .Y(_187_)
+  );
+  NOT _499_ (
+    .A(_187_),
+    .Y(_188_)
+  );
+  NOR _500_ (
+    .A(_186_),
+    .B(_188_),
+    .Y(_189_)
+  );
+  NOR _501_ (
+    .A(_030_),
+    .B(_189_),
+    .Y(_190_)
+  );
+  NAND _502_ (
+    .A(_034_),
+    .B(_035_),
+    .Y(_191_)
+  );
+  NOR _503_ (
+    .A(_095_),
+    .B(_191_),
+    .Y(_192_)
+  );
+  NOR _504_ (
+    .A(_024_),
+    .B(_036_),
+    .Y(_193_)
+  );
+  NAND _505_ (
+    .A(_055_),
+    .B(_193_),
+    .Y(_194_)
+  );
+  NAND _506_ (
+    .A(_022_),
+    .B(_031_),
+    .Y(_195_)
+  );
+  NAND _507_ (
+    .A(_194_),
+    .B(_195_),
+    .Y(_196_)
+  );
+  NOR _508_ (
+    .A(_192_),
+    .B(_196_),
+    .Y(_197_)
+  );
+  NAND _509_ (
+    .A(_107_),
+    .B(_197_),
+    .Y(_198_)
+  );
+  NOR _510_ (
+    .A(_190_),
+    .B(_198_),
+    .Y(_199_)
+  );
+  NOR _511_ (
+    .A(decode_op_setflag_o),
+    .B(decode_op_lsu_store_o),
+    .Y(_200_)
+  );
+  NAND _512_ (
+    .A(_052_),
+    .B(_088_),
+    .Y(_201_)
+  );
+  NOT _513_ (
+    .A(_201_),
+    .Y(_202_)
+  );
+  NOR _514_ (
+    .A(_062_),
+    .B(_111_),
+    .Y(_203_)
+  );
+  NOR _515_ (
+    .A(_036_),
+    .B(_203_),
+    .Y(_204_)
+  );
+  NOR _516_ (
+    .A(_201_),
+    .B(_204_),
+    .Y(_205_)
+  );
+  NAND _517_ (
+    .A(_200_),
+    .B(_205_),
+    .Y(_206_)
+  );
+  NAND _518_ (
+    .A(_053_),
+    .B(_058_),
+    .Y(_207_)
+  );
+  NOR _519_ (
+    .A(decode_op_jal_o),
+    .B(_207_),
+    .Y(_208_)
+  );
+  NAND _520_ (
+    .A(_059_),
+    .B(_081_),
+    .Y(_209_)
+  );
+  NOR _521_ (
+    .A(_075_),
+    .B(_209_),
+    .Y(_210_)
+  );
+  NAND _522_ (
+    .A(_208_),
+    .B(_210_),
+    .Y(_211_)
+  );
+  NOR _523_ (
+    .A(_206_),
+    .B(_211_),
+    .Y(_212_)
+  );
+  NOR _524_ (
+    .A(_030_),
+    .B(_187_),
+    .Y(decode_op_brcond_o)
+  );
+  NAND _525_ (
+    .A(_199_),
+    .B(_212_),
+    .Y(_213_)
+  );
+  NAND _526_ (
+    .A(decode_insn_i[6]),
+    .B(decode_insn_i[7]),
+    .Y(_214_)
+  );
+  NAND _527_ (
+    .A(_006_),
+    .B(_214_),
+    .Y(_215_)
+  );
+  NAND _528_ (
+    .A(decode_op_shift_o),
+    .B(_215_),
+    .Y(_216_)
+  );
+  NAND _529_ (
+    .A(_012_),
+    .B(_078_),
+    .Y(_217_)
+  );
+  NOR _530_ (
+    .A(_120_),
+    .B(_217_),
+    .Y(_218_)
+  );
+  NOR _531_ (
+    .A(_121_),
+    .B(_218_),
+    .Y(_219_)
+  );
+  NAND _532_ (
+    .A(_069_),
+    .B(_219_),
+    .Y(_220_)
+  );
+  NOR _533_ (
+    .A(_073_),
+    .B(_220_),
+    .Y(_221_)
+  );
+  NOR _534_ (
+    .A(_081_),
+    .B(_082_),
+    .Y(_222_)
+  );
+  NAND _535_ (
+    .A(_085_),
+    .B(_222_),
+    .Y(_223_)
+  );
+  NAND _536_ (
+    .A(_216_),
+    .B(_223_),
+    .Y(_224_)
+  );
+  NOR _537_ (
+    .A(_221_),
+    .B(_224_),
+    .Y(_225_)
+  );
+  NAND _538_ (
+    .A(_213_),
+    .B(_225_),
+    .Y(decode_except_illegal_o)
+  );
+  NOR _539_ (
+    .A(_046_),
+    .B(_112_),
+    .Y(_226_)
+  );
+  NOR _540_ (
+    .A(_192_),
+    .B(_226_),
+    .Y(_227_)
+  );
+  NOT _541_ (
+    .A(_227_),
+    .Y(decode_lsu_length_o[0])
+  );
+  NOR _542_ (
+    .A(_036_),
+    .B(_187_),
+    .Y(_228_)
+  );
+  NAND _543_ (
+    .A(_045_),
+    .B(_051_),
+    .Y(_229_)
+  );
+  NAND _544_ (
+    .A(_227_),
+    .B(_229_),
+    .Y(_230_)
+  );
+  NOR _545_ (
+    .A(_228_),
+    .B(_230_),
+    .Y(decode_lsu_length_o[1])
+  );
+  NAND _546_ (
+    .A(_003_),
+    .B(_029_),
+    .Y(_231_)
+  );
+  NOR _547_ (
+    .A(_094_),
+    .B(_231_),
+    .Y(decode_op_jbr_o)
+  );
+  NOR _548_ (
+    .A(_043_),
+    .B(_046_),
+    .Y(_232_)
+  );
+  NAND _549_ (
+    .A(_130_),
+    .B(_232_),
+    .Y(_233_)
+  );
+  NAND _550_ (
+    .A(_035_),
+    .B(_039_),
+    .Y(_234_)
+  );
+  NAND _551_ (
+    .A(_202_),
+    .B(_234_),
+    .Y(_235_)
+  );
+  NOR _552_ (
+    .A(decode_op_jal_o),
+    .B(_235_),
+    .Y(_236_)
+  );
+  NAND _553_ (
+    .A(_233_),
+    .B(_236_),
+    .Y(decode_rf_wb_o)
+  );
+  NAND _554_ (
+    .A(_052_),
+    .B(_152_),
+    .Y(decode_immediate_sel_o)
+  );
+  NAND _555_ (
+    .A(_109_),
+    .B(_116_),
+    .Y(_237_)
+  );
+  NAND _556_ (
+    .A(_048_),
+    .B(_237_),
+    .Y(decode_adder_do_sub_o)
+  );
+  NAND _557_ (
+    .A(_026_),
+    .B(_195_),
+    .Y(decode_op_jr_o)
+  );
+  NOR _558_ (
+    .A(decode_op_jbr_o),
+    .B(decode_op_jr_o),
+    .Y(_238_)
+  );
+  NOT _559_ (
+    .A(_238_),
+    .Y(decode_op_branch_o)
+  );
+  NAND _560_ (
+    .A(_119_),
+    .B(_122_),
+    .Y(decode_op_mul_o)
+  );
+  NAND _561_ (
+    .A(_124_),
+    .B(_127_),
+    .Y(decode_op_div_o)
+  );
+  assign decode_adder_do_carry_o = 1'h0;
+  assign decode_imm16_o[10:0] = decode_insn_i[10:0];
+  assign decode_immjbr_upper_o = decode_insn_i[25:16];
+  assign decode_lsu_zext_o = decode_insn_i[26];
+  assign decode_op_fpu_o = 8'h00;
+  assign decode_opc_insn_o = decode_insn_i[31:26];
+  assign decode_rfa_adr_o = decode_insn_i[20:16];
+  assign decode_rfb_adr_o = decode_insn_i[15:11];
+  assign imm_high = { decode_imm16_o[15:11], decode_insn_i[10:0], 16'h0000 };
+  assign imm_high_sel = decode_op_movhi_o;
+  assign imm_sext = { decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15:11], decode_insn_i[10:0] };
+  assign imm_zext = { 16'h0000, decode_imm16_o[15:11], decode_insn_i[10:0] };
+  assign opc_alu = decode_insn_i[3:0];
+  assign opc_insn = decode_insn_i[31:26];
+endmodule
