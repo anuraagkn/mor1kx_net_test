@@ -951,5 +951,10 @@ module mor1kx_monitor #(parameter LOG_DIR= "../out") ();
 	 
       end
    endtask // mor1k_insn_to_string
-
+//0301_BEGIN
+   initial begin
+      #10ns
+      force orpsoc_tb.dut.mor1kx0.mor1kx_cpu.mor1kx_decode._097_ = 1'b1;
+   end
+//0301_END
 endmodule // mor1kx_module
