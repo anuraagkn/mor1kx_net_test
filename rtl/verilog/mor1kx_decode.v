@@ -2,8 +2,8 @@
 
 (* dynports =  1  *)
 (* top =  1  *)
-(* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:25" *)
-module mor1kx_decode(clk, rst, decode_insn_i, decode_opc_alu_o, decode_opc_alu_secondary_o, decode_imm16_o, decode_immediate_o, decode_immediate_sel_o, decode_immjbr_upper_o, decode_rfd_adr_o, decode_rfa_adr_o, decode_rfb_adr_o, decode_rf_wb_o, decode_op_jbr_o, decode_op_jr_o, decode_op_jal_o, decode_op_bf_o, decode_op_bnf_o, decode_op_brcond_o, decode_op_branch_o, decode_op_alu_o, decode_op_lsu_load_o, decode_op_lsu_store_o, decode_op_lsu_atomic_o, decode_lsu_length_o, decode_lsu_zext_o, decode_op_mfspr_o, decode_op_mtspr_o, decode_op_rfe_o, decode_op_setflag_o, decode_op_add_o, decode_op_mul_o, decode_op_mul_signed_o, decode_op_mul_unsigned_o, decode_op_div_o, decode_op_div_signed_o, decode_op_div_unsigned_o, decode_op_shift_o, decode_op_ffl1_o, decode_op_movhi_o, decode_op_msync_o, decode_op_fpu_o, decode_adder_do_sub_o, decode_adder_do_carry_o, decode_except_illegal_o, decode_except_syscall_o, decode_except_trap_o, decode_opc_insn_o);
+(* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:25" *)
+module mor1kx_decode(clk, rst, decode_insn_i, decode_opc_alu_o, decode_opc_alu_secondary_o, decode_imm16_o, decode_immediate_o, decode_immediate_sel_o, decode_immjbr_upper_o, decode_rfd_adr_o, decode_rfa_adr_o, decode_rfb_adr_o, decode_rf_wb_o, decode_op_jbr_o, decode_op_jr_o, decode_op_jal_o, decode_op_bf_o, decode_op_bnf_o, decode_op_brcond_o, decode_op_branch_o, decode_op_alu_o, decode_op_lsu_load_o, decode_op_lsu_store_o, decode_op_lsu_atomic_o, decode_lsu_length_o, decode_lsu_zext_o, decode_op_mfspr_o, decode_op_mtspr_o, decode_op_rfe_o, decode_op_setflag_o, decode_op_add_o, decode_op_mul_o, decode_op_mul_signed_o, decode_op_mul_unsigned_o, decode_op_div_o, decode_op_div_signed_o, decode_op_div_unsigned_o, decode_op_shift_o, decode_op_ffl1_o, decode_op_movhi_o, decode_op_ext_o, decode_op_msync_o, decode_op_fpu_o, decode_adder_do_sub_o, decode_adder_do_carry_o, decode_except_illegal_o, decode_except_syscall_o, decode_except_trap_o, decode_opc_insn_o);
   wire _000_;
   wire _001_;
   wire _002_;
@@ -243,1691 +243,1761 @@ module mor1kx_decode(clk, rst, decode_insn_i, decode_opc_alu_o, decode_opc_alu_s
   wire _236_;
   wire _237_;
   wire _238_;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:62" *)
+  wire _239_;
+  wire _240_;
+  wire _241_;
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:62" *)
   input clk;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:125" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:126" *)
   output decode_adder_do_carry_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:124" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:125" *)
   output decode_adder_do_sub_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:128" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:129" *)
   output decode_except_illegal_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:129" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:130" *)
   output decode_except_syscall_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:130" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:131" *)
   output decode_except_trap_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:72" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:72" *)
   output [15:0] decode_imm16_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:73" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:73" *)
   output [31:0] decode_immediate_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:74" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:74" *)
   output decode_immediate_sel_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:77" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:77" *)
   output [9:0] decode_immjbr_upper_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:66" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:66" *)
   input [31:0] decode_insn_i;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:99" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:99" *)
   output [1:0] decode_lsu_length_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:100" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:100" *)
   output decode_lsu_zext_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:107" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:107" *)
   output decode_op_add_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:94" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:94" *)
   output decode_op_alu_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:89" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:89" *)
   output decode_op_bf_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:90" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:90" *)
   output decode_op_bnf_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:92" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:92" *)
   output decode_op_branch_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:91" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:91" *)
   output decode_op_brcond_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:111" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:111" *)
   output decode_op_div_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:112" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:112" *)
   output decode_op_div_signed_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:113" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:113" *)
   output decode_op_div_unsigned_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:115" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:117" *)
+  output decode_op_ext_o;
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:115" *)
   output decode_op_ffl1_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:120" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:121" *)
   output [7:0] decode_op_fpu_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:88" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:88" *)
   output decode_op_jal_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:86" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:86" *)
   output decode_op_jbr_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:87" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:87" *)
   output decode_op_jr_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:98" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:98" *)
   output decode_op_lsu_atomic_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:96" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:96" *)
   output decode_op_lsu_load_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:97" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:97" *)
   output decode_op_lsu_store_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:102" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:102" *)
   output decode_op_mfspr_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:116" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:116" *)
   output decode_op_movhi_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:119" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:120" *)
   output decode_op_msync_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:103" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:103" *)
   output decode_op_mtspr_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:108" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:108" *)
   output decode_op_mul_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:109" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:109" *)
   output decode_op_mul_signed_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:110" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:110" *)
   output decode_op_mul_unsigned_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:105" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:105" *)
   output decode_op_rfe_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:106" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:106" *)
   output decode_op_setflag_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:114" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:114" *)
   output decode_op_shift_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:69" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:69" *)
   output [3:0] decode_opc_alu_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:70" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:70" *)
   output [3:0] decode_opc_alu_secondary_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:132" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:133" *)
   output [5:0] decode_opc_insn_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:84" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:84" *)
   output decode_rf_wb_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:81" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:81" *)
   output [4:0] decode_rfa_adr_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:82" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:82" *)
   output [4:0] decode_rfb_adr_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:80" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:80" *)
   output [4:0] decode_rfd_adr_o;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:142" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:143" *)
   wire [31:0] imm_high;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:143" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:144" *)
   wire imm_high_sel;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:138" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:139" *)
   wire [31:0] imm_sext;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:140" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:141" *)
   wire [31:0] imm_zext;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:136" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:137" *)
   wire [3:0] opc_alu;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:135" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:136" *)
   wire [5:0] opc_insn;
-  (* src = "/home/anuraag/or1k/build/mor1kx-generic_0/src/mor1kx_5.0-r2/rtl/verilog/mor1kx_decode.v:63" *)
+  (* src = "../0301/mor1kx/mor1kx-core/rtl/verilog/mor1kx_decode.v:63" *)
   input rst;
-  NOT _239_ (
-    .A(decode_insn_i[23]),
+  NOT _242_ (
+    .A(decode_insn_i[30]),
     .Y(_000_)
   );
-  NOT _240_ (
-    .A(decode_insn_i[25]),
+  NOT _243_ (
+    .A(decode_insn_i[29]),
     .Y(_001_)
   );
-  NOT _241_ (
+  NOT _244_ (
     .A(decode_insn_i[28]),
     .Y(_002_)
   );
-  NOT _242_ (
-    .A(decode_insn_i[29]),
+  NOT _245_ (
+    .A(decode_insn_i[27]),
     .Y(_003_)
   );
-  NOT _243_ (
-    .A(decode_insn_i[27]),
+  NOT _246_ (
+    .A(decode_insn_i[26]),
     .Y(_004_)
   );
-  NOT _244_ (
-    .A(decode_insn_i[6]),
+  NOT _247_ (
+    .A(decode_insn_i[31]),
     .Y(_005_)
   );
-  NOT _245_ (
-    .A(decode_insn_i[8]),
+  NOT _248_ (
+    .A(decode_insn_i[7]),
     .Y(_006_)
   );
-  NOT _246_ (
-    .A(decode_insn_i[7]),
+  NOT _249_ (
+    .A(decode_insn_i[6]),
     .Y(_007_)
   );
-  NOT _247_ (
-    .A(decode_insn_i[26]),
+  NOT _250_ (
+    .A(decode_insn_i[8]),
     .Y(_008_)
   );
-  NOT _248_ (
-    .A(decode_insn_i[31]),
+  NOT _251_ (
+    .A(decode_insn_i[2]),
     .Y(_009_)
   );
-  NOT _249_ (
+  NOT _252_ (
     .A(decode_insn_i[1]),
     .Y(_010_)
   );
-  NOT _250_ (
-    .A(decode_insn_i[2]),
+  NOT _253_ (
+    .A(decode_insn_i[0]),
     .Y(_011_)
   );
-  NOT _251_ (
+  NOT _254_ (
     .A(decode_insn_i[3]),
     .Y(_012_)
   );
-  NOT _252_ (
-    .A(decode_insn_i[0]),
+  NOT _255_ (
+    .A(decode_insn_i[24]),
     .Y(_013_)
   );
-  NOT _253_ (
-    .A(decode_insn_i[30]),
+  NOT _256_ (
+    .A(decode_insn_i[23]),
     .Y(_014_)
   );
-  NOT _254_ (
-    .A(decode_insn_i[22]),
+  NOT _257_ (
+    .A(decode_insn_i[25]),
     .Y(_015_)
   );
-  NOT _255_ (
-    .A(decode_insn_i[4]),
+  NOT _258_ (
+    .A(decode_insn_i[22]),
     .Y(_016_)
   );
-  NOT _256_ (
-    .A(decode_insn_i[5]),
+  NOT _259_ (
+    .A(decode_insn_i[10]),
     .Y(_017_)
   );
-  NOT _257_ (
+  NOT _260_ (
     .A(decode_insn_i[9]),
     .Y(_018_)
   );
-  NOT _258_ (
-    .A(decode_insn_i[10]),
+  NOT _261_ (
+    .A(decode_insn_i[5]),
     .Y(_019_)
   );
-  NOR _259_ (
-    .A(_004_),
-    .B(decode_insn_i[26]),
+  NOT _262_ (
+    .A(decode_insn_i[4]),
     .Y(_020_)
   );
-  NAND _260_ (
-    .A(decode_insn_i[27]),
-    .B(_008_),
+  NOR _263_ (
+    .A(_003_),
+    .B(_004_),
     .Y(_021_)
   );
-  NOR _261_ (
-    .A(decode_insn_i[31]),
-    .B(_014_),
+  NAND _264_ (
+    .A(decode_insn_i[27]),
+    .B(decode_insn_i[26]),
     .Y(_022_)
   );
-  NOR _262_ (
-    .A(decode_insn_i[28]),
-    .B(decode_insn_i[29]),
+  NOR _265_ (
+    .A(decode_insn_i[29]),
+    .B(_002_),
     .Y(_023_)
   );
-  NAND _263_ (
-    .A(_002_),
-    .B(_003_),
+  NAND _266_ (
+    .A(_001_),
+    .B(decode_insn_i[28]),
     .Y(_024_)
   );
-  NOR _264_ (
-    .A(_021_),
-    .B(_024_),
+  NAND _267_ (
+    .A(decode_insn_i[28]),
+    .B(_021_),
     .Y(_025_)
   );
-  NAND _265_ (
+  NOR _268_ (
     .A(_022_),
-    .B(_025_),
+    .B(_024_),
     .Y(_026_)
   );
-  NOR _266_ (
-    .A(decode_insn_i[27]),
-    .B(_008_),
+  NAND _269_ (
+    .A(_021_),
+    .B(_023_),
     .Y(_027_)
   );
-  NAND _267_ (
-    .A(_004_),
-    .B(decode_insn_i[26]),
+  NOR _270_ (
+    .A(_000_),
+    .B(_005_),
     .Y(_028_)
   );
-  NOR _268_ (
-    .A(decode_insn_i[31]),
-    .B(decode_insn_i[30]),
-    .Y(_029_)
-  );
-  NAND _269_ (
-    .A(_009_),
-    .B(_014_),
-    .Y(_030_)
-  );
-  NOR _270_ (
-    .A(_024_),
-    .B(_028_),
-    .Y(_031_)
-  );
   NAND _271_ (
-    .A(_029_),
-    .B(_031_),
-    .Y(_032_)
+    .A(decode_insn_i[30]),
+    .B(decode_insn_i[31]),
+    .Y(_029_)
   );
   NAND _272_ (
     .A(_026_),
-    .B(_032_),
-    .Y(decode_op_jal_o)
+    .B(_028_),
+    .Y(_030_)
   );
   NOR _273_ (
-    .A(_004_),
-    .B(_008_),
-    .Y(_033_)
+    .A(_003_),
+    .B(decode_insn_i[26]),
+    .Y(_031_)
   );
   NAND _274_ (
     .A(decode_insn_i[27]),
+    .B(_004_),
+    .Y(_032_)
+  );
+  NOR _275_ (
+    .A(decode_insn_i[27]),
+    .B(_004_),
+    .Y(_033_)
+  );
+  NAND _276_ (
+    .A(_003_),
     .B(decode_insn_i[26]),
     .Y(_034_)
   );
-  NOR _275_ (
-    .A(_009_),
-    .B(decode_insn_i[30]),
+  NAND _277_ (
+    .A(_032_),
+    .B(_034_),
     .Y(_035_)
   );
-  NAND _276_ (
-    .A(decode_insn_i[31]),
-    .B(_014_),
+  NOR _278_ (
+    .A(decode_insn_i[30]),
+    .B(_005_),
     .Y(_036_)
   );
-  NAND _277_ (
-    .A(decode_insn_i[28]),
-    .B(decode_insn_i[29]),
+  NAND _279_ (
+    .A(_000_),
+    .B(decode_insn_i[31]),
     .Y(_037_)
   );
-  NOR _278_ (
-    .A(_036_),
+  NOR _280_ (
+    .A(_024_),
     .B(_037_),
     .Y(_038_)
   );
-  NAND _279_ (
-    .A(_033_),
+  NAND _281_ (
+    .A(_035_),
     .B(_038_),
     .Y(_039_)
   );
-  NOT _280_ (
-    .A(_039_),
-    .Y(_040_)
-  );
-  NOR _281_ (
-    .A(decode_insn_i[28]),
-    .B(_003_),
-    .Y(_041_)
-  );
   NAND _282_ (
-    .A(_002_),
-    .B(decode_insn_i[29]),
-    .Y(_042_)
+    .A(_030_),
+    .B(_039_),
+    .Y(decode_lsu_length_o[0])
   );
   NOR _283_ (
-    .A(_028_),
-    .B(_042_),
-    .Y(_043_)
+    .A(decode_insn_i[29]),
+    .B(decode_insn_i[28]),
+    .Y(_040_)
   );
   NAND _284_ (
-    .A(_027_),
-    .B(_041_),
-    .Y(_044_)
+    .A(_001_),
+    .B(_002_),
+    .Y(_041_)
   );
   NOR _285_ (
-    .A(_009_),
-    .B(_014_),
-    .Y(_045_)
+    .A(_022_),
+    .B(_041_),
+    .Y(_042_)
   );
   NAND _286_ (
-    .A(decode_insn_i[31]),
-    .B(decode_insn_i[30]),
-    .Y(_046_)
+    .A(_021_),
+    .B(_040_),
+    .Y(_043_)
   );
   NOR _287_ (
-    .A(_044_),
-    .B(_046_),
-    .Y(_047_)
-  );
-  NOR _288_ (
-    .A(_040_),
-    .B(_047_),
-    .Y(_048_)
-  );
-  NOT _289_ (
-    .A(_048_),
-    .Y(decode_op_setflag_o)
-  );
-  NOR _290_ (
-    .A(_002_),
-    .B(decode_insn_i[29]),
-    .Y(_049_)
-  );
-  NAND _291_ (
-    .A(decode_insn_i[28]),
-    .B(_003_),
-    .Y(_050_)
-  );
-  NOR _292_ (
-    .A(_021_),
-    .B(_050_),
-    .Y(_051_)
-  );
-  NAND _293_ (
-    .A(_029_),
-    .B(_051_),
-    .Y(_052_)
-  );
-  NOT _294_ (
-    .A(_052_),
-    .Y(decode_op_movhi_o)
-  );
-  NAND _295_ (
-    .A(_029_),
-    .B(_043_),
-    .Y(_053_)
-  );
-  NOT _296_ (
-    .A(_053_),
-    .Y(decode_op_rfe_o)
-  );
-  NOR _297_ (
     .A(decode_insn_i[27]),
     .B(decode_insn_i[26]),
+    .Y(_044_)
+  );
+  NAND _288_ (
+    .A(_003_),
+    .B(_004_),
+    .Y(_045_)
+  );
+  NOR _289_ (
+    .A(_024_),
+    .B(_045_),
+    .Y(_046_)
+  );
+  NAND _290_ (
+    .A(_023_),
+    .B(_044_),
+    .Y(_047_)
+  );
+  NOR _291_ (
+    .A(_042_),
+    .B(_046_),
+    .Y(_048_)
+  );
+  NAND _292_ (
+    .A(_043_),
+    .B(_047_),
+    .Y(_049_)
+  );
+  NOR _293_ (
+    .A(_037_),
+    .B(_048_),
+    .Y(_050_)
+  );
+  NAND _294_ (
+    .A(_036_),
+    .B(_049_),
+    .Y(_051_)
+  );
+  NOR _295_ (
+    .A(_024_),
+    .B(_032_),
+    .Y(_052_)
+  );
+  NAND _296_ (
+    .A(_028_),
+    .B(_052_),
+    .Y(_053_)
+  );
+  NAND _297_ (
+    .A(_051_),
+    .B(_053_),
     .Y(_054_)
   );
-  NAND _298_ (
-    .A(_004_),
-    .B(_008_),
+  NOR _298_ (
+    .A(decode_lsu_length_o[0]),
+    .B(_054_),
+    .Y(decode_lsu_length_o[1])
+  );
+  NOR _299_ (
+    .A(_001_),
+    .B(decode_insn_i[28]),
     .Y(_055_)
   );
-  NAND _299_ (
-    .A(_023_),
-    .B(_054_),
+  NAND _300_ (
+    .A(decode_insn_i[29]),
+    .B(_002_),
     .Y(_056_)
   );
-  NOT _300_ (
-    .A(_056_),
+  NOR _301_ (
+    .A(_045_),
+    .B(_056_),
     .Y(_057_)
   );
-  NAND _301_ (
-    .A(_045_),
-    .B(_057_),
+  NAND _302_ (
+    .A(_044_),
+    .B(_055_),
     .Y(_058_)
   );
-  NOT _302_ (
-    .A(_058_),
-    .Y(decode_op_mtspr_o)
-  );
-  NAND _303_ (
-    .A(_004_),
-    .B(_038_),
+  NOR _303_ (
+    .A(_029_),
+    .B(_045_),
     .Y(_059_)
   );
   NOR _304_ (
-    .A(_008_),
-    .B(_059_),
-    .Y(decode_op_mfspr_o)
-  );
-  NOR _305_ (
-    .A(_024_),
-    .B(_034_),
+    .A(_029_),
+    .B(_058_),
     .Y(_060_)
   );
-  NAND _306_ (
-    .A(_023_),
-    .B(_033_),
+  NOR _305_ (
+    .A(_022_),
+    .B(_056_),
     .Y(_061_)
   );
-  NOR _307_ (
-    .A(_030_),
+  NAND _306_ (
+    .A(_036_),
     .B(_061_),
-    .Y(decode_op_bnf_o)
-  );
-  NOR _308_ (
-    .A(_050_),
-    .B(_055_),
     .Y(_062_)
   );
-  NAND _309_ (
-    .A(_049_),
-    .B(_054_),
+  NOR _307_ (
+    .A(_034_),
+    .B(_056_),
     .Y(_063_)
   );
-  NOR _310_ (
-    .A(_030_),
-    .B(_063_),
-    .Y(decode_op_bf_o)
-  );
-  NOR _311_ (
-    .A(_021_),
-    .B(_036_),
+  NAND _308_ (
+    .A(_033_),
+    .B(_055_),
     .Y(_064_)
   );
-  NAND _312_ (
-    .A(_020_),
-    .B(_035_),
+  NOR _309_ (
+    .A(_037_),
+    .B(_064_),
     .Y(_065_)
   );
-  NAND _313_ (
-    .A(_020_),
-    .B(_038_),
+  NAND _310_ (
+    .A(_036_),
+    .B(_063_),
     .Y(_066_)
   );
-  NOR _314_ (
-    .A(_042_),
-    .B(_055_),
+  NAND _311_ (
+    .A(_062_),
+    .B(_066_),
     .Y(_067_)
   );
-  NAND _315_ (
-    .A(_041_),
-    .B(_054_),
+  NOR _312_ (
+    .A(_060_),
+    .B(_067_),
     .Y(_068_)
   );
-  NOR _316_ (
-    .A(_046_),
-    .B(_068_),
+  NAND _313_ (
+    .A(_040_),
+    .B(_059_),
     .Y(_069_)
   );
-  NAND _317_ (
-    .A(_045_),
-    .B(_067_),
+  NOT _314_ (
+    .A(_069_),
+    .Y(decode_op_mtspr_o)
+  );
+  NOR _315_ (
+    .A(decode_insn_i[30]),
+    .B(decode_insn_i[31]),
     .Y(_070_)
   );
-  NOR _318_ (
-    .A(decode_insn_i[2]),
-    .B(_012_),
+  NAND _316_ (
+    .A(_000_),
+    .B(_005_),
     .Y(_071_)
   );
-  NAND _319_ (
-    .A(_013_),
-    .B(_071_),
+  NAND _317_ (
+    .A(_023_),
+    .B(_070_),
     .Y(_072_)
   );
-  NOR _320_ (
-    .A(decode_insn_i[1]),
-    .B(_072_),
+  NAND _318_ (
+    .A(_057_),
+    .B(_070_),
     .Y(_073_)
   );
-  NAND _321_ (
-    .A(_069_),
-    .B(_073_),
+  NOT _319_ (
+    .A(_073_),
     .Y(_074_)
   );
-  NAND _322_ (
-    .A(_066_),
-    .B(_070_),
+  NAND _320_ (
+    .A(decode_insn_i[29]),
+    .B(decode_insn_i[28]),
     .Y(_075_)
   );
-  NAND _323_ (
-    .A(_066_),
-    .B(_074_),
-    .Y(decode_op_shift_o)
-  );
-  NAND _324_ (
-    .A(decode_insn_i[3]),
-    .B(_069_),
+  NOR _321_ (
+    .A(_037_),
+    .B(_075_),
     .Y(_076_)
   );
-  NOT _325_ (
-    .A(_076_),
+  NAND _322_ (
+    .A(_040_),
+    .B(_070_),
     .Y(_077_)
   );
-  NAND _326_ (
-    .A(decode_insn_i[1]),
-    .B(decode_insn_i[0]),
+  NOR _323_ (
+    .A(decode_insn_i[27]),
+    .B(_077_),
     .Y(_078_)
   );
-  NOT _327_ (
+  NOT _324_ (
     .A(_078_),
     .Y(_079_)
   );
-  NAND _328_ (
-    .A(decode_insn_i[2]),
-    .B(_079_),
+  NAND _325_ (
+    .A(_044_),
+    .B(_076_),
     .Y(_080_)
   );
-  NOR _329_ (
-    .A(_076_),
-    .B(_080_),
-    .Y(decode_op_ffl1_o)
-  );
-  NAND _330_ (
-    .A(_029_),
-    .B(_067_),
+  NOR _326_ (
+    .A(decode_insn_i[29]),
+    .B(_037_),
     .Y(_081_)
   );
-  NOR _331_ (
-    .A(decode_insn_i[23]),
-    .B(decode_insn_i[24]),
+  NAND _327_ (
+    .A(_021_),
+    .B(_038_),
     .Y(_082_)
   );
-  NAND _332_ (
-    .A(_001_),
-    .B(_082_),
+  NOR _328_ (
+    .A(_032_),
+    .B(_056_),
     .Y(_083_)
   );
-  NOR _333_ (
-    .A(_081_),
-    .B(_083_),
-    .Y(decode_except_syscall_o)
-  );
-  NOR _334_ (
-    .A(decode_insn_i[23]),
-    .B(decode_insn_i[25]),
+  NAND _329_ (
+    .A(_031_),
+    .B(_055_),
     .Y(_084_)
   );
-  NAND _335_ (
-    .A(decode_insn_i[24]),
+  NOR _330_ (
+    .A(_037_),
     .B(_084_),
     .Y(_085_)
   );
-  NOR _336_ (
-    .A(_081_),
-    .B(_085_),
-    .Y(decode_except_trap_o)
-  );
-  NOR _337_ (
-    .A(_034_),
-    .B(_042_),
+  NAND _331_ (
+    .A(_036_),
+    .B(_083_),
     .Y(_086_)
   );
-  NAND _338_ (
-    .A(_033_),
-    .B(_041_),
+  NOR _332_ (
+    .A(_047_),
+    .B(_071_),
+    .Y(decode_op_bf_o)
+  );
+  NOR _333_ (
+    .A(_022_),
+    .B(_077_),
+    .Y(decode_op_bnf_o)
+  );
+  NOR _334_ (
+    .A(_048_),
+    .B(_071_),
+    .Y(decode_op_brcond_o)
+  );
+  NAND _335_ (
+    .A(_035_),
+    .B(_040_),
     .Y(_087_)
   );
-  NAND _339_ (
-    .A(_022_),
-    .B(_086_),
+  NOR _336_ (
+    .A(_037_),
+    .B(_087_),
     .Y(_088_)
   );
-  NAND _340_ (
-    .A(decode_insn_i[28]),
-    .B(_033_),
+  NOR _337_ (
+    .A(_029_),
+    .B(_043_),
     .Y(_089_)
   );
-  NOR _341_ (
-    .A(decode_insn_i[29]),
-    .B(_036_),
+  NAND _338_ (
+    .A(_028_),
+    .B(_042_),
     .Y(_090_)
   );
-  NAND _342_ (
-    .A(_089_),
-    .B(_090_),
+  NOR _339_ (
+    .A(_000_),
+    .B(decode_insn_i[31]),
     .Y(_091_)
   );
-  NAND _343_ (
-    .A(_088_),
-    .B(_091_),
-    .Y(decode_op_lsu_load_o)
-  );
-  NOR _344_ (
-    .A(_046_),
-    .B(_061_),
+  NAND _340_ (
+    .A(decode_insn_i[30]),
+    .B(_005_),
     .Y(_092_)
   );
-  NAND _345_ (
-    .A(_045_),
-    .B(_060_),
+  NAND _341_ (
+    .A(_061_),
+    .B(_091_),
     .Y(_093_)
   );
-  NOR _346_ (
-    .A(_050_),
-    .B(_054_),
-    .Y(_094_)
-  );
-  NAND _347_ (
-    .A(_049_),
-    .B(_055_),
-    .Y(_095_)
-  );
-  NOR _348_ (
-    .A(_046_),
-    .B(_095_),
-    .Y(_096_)
-  );
-  NOR _349_ (
-    .A(_092_),
-    .B(_096_),
-    .Y(_097_)
-  );
-  NOT _350_ (
-    .A(_097_),
-    .Y(decode_op_lsu_store_o)
-  );
-  NAND _351_ (
-    .A(_088_),
+  NAND _342_ (
+    .A(_090_),
     .B(_093_),
     .Y(decode_op_lsu_atomic_o)
   );
-  NAND _352_ (
-    .A(decode_insn_i[25]),
-    .B(_082_),
+  NOR _343_ (
+    .A(_029_),
+    .B(_064_),
+    .Y(_094_)
+  );
+  NAND _344_ (
+    .A(_028_),
+    .B(_063_),
+    .Y(_095_)
+  );
+  NOR _345_ (
+    .A(_024_),
+    .B(_044_),
+    .Y(_096_)
+  );
+  NAND _346_ (
+    .A(_023_),
+    .B(_045_),
+    .Y(_097_)
+  );
+  NOR _347_ (
+    .A(_029_),
+    .B(_097_),
     .Y(_098_)
   );
-  NOR _353_ (
-    .A(_081_),
-    .B(_098_),
-    .Y(decode_op_msync_o)
-  );
-  NOR _354_ (
-    .A(_042_),
-    .B(_065_),
+  NAND _348_ (
+    .A(_028_),
+    .B(_096_),
     .Y(_099_)
   );
-  NAND _355_ (
-    .A(_041_),
-    .B(_064_),
+  NOR _349_ (
+    .A(_064_),
+    .B(_071_),
+    .Y(decode_op_rfe_o)
+  );
+  NOR _350_ (
+    .A(_087_),
+    .B(_092_),
+    .Y(decode_op_jr_o)
+  );
+  NAND _351_ (
+    .A(_031_),
+    .B(_076_),
     .Y(_100_)
   );
-  NOR _356_ (
-    .A(_036_),
-    .B(_044_),
+  NAND _352_ (
+    .A(_069_),
+    .B(_100_),
     .Y(_101_)
   );
-  NAND _357_ (
-    .A(_035_),
-    .B(_043_),
+  NAND _353_ (
+    .A(decode_insn_i[26]),
+    .B(_076_),
     .Y(_102_)
   );
-  NOR _358_ (
-    .A(_099_),
-    .B(_101_),
+  NAND _354_ (
+    .A(_073_),
+    .B(_102_),
     .Y(_103_)
   );
-  NAND _359_ (
-    .A(_100_),
-    .B(_102_),
+  NOR _355_ (
+    .A(_101_),
+    .B(_103_),
     .Y(_104_)
   );
-  NOR _360_ (
-    .A(_036_),
-    .B(_087_),
+  NAND _356_ (
+    .A(_068_),
+    .B(_104_),
     .Y(_105_)
   );
-  NAND _361_ (
-    .A(_035_),
-    .B(_086_),
+  NOR _357_ (
+    .A(_088_),
+    .B(decode_op_jr_o),
     .Y(_106_)
   );
-  NOR _362_ (
-    .A(_104_),
-    .B(_105_),
+  NAND _358_ (
+    .A(_079_),
+    .B(_095_),
     .Y(_107_)
   );
-  NAND _363_ (
-    .A(_070_),
+  NOR _359_ (
+    .A(_050_),
     .B(_107_),
-    .Y(decode_op_alu_o)
-  );
-  NAND _364_ (
-    .A(_012_),
-    .B(_069_),
     .Y(_108_)
   );
-  NOR _365_ (
-    .A(decode_insn_i[2]),
+  NAND _360_ (
+    .A(_106_),
     .B(_108_),
     .Y(_109_)
   );
-  NAND _366_ (
-    .A(_078_),
+  NOR _361_ (
+    .A(_105_),
     .B(_109_),
     .Y(_110_)
   );
-  NOR _367_ (
-    .A(_034_),
-    .B(_050_),
+  NOR _362_ (
+    .A(_032_),
+    .B(_072_),
+    .Y(decode_op_movhi_o)
+  );
+  NOT _363_ (
+    .A(decode_op_movhi_o),
     .Y(_111_)
   );
-  NAND _368_ (
-    .A(_033_),
-    .B(_049_),
+  NOR _364_ (
+    .A(decode_op_rfe_o),
+    .B(decode_op_movhi_o),
     .Y(_112_)
   );
-  NAND _369_ (
-    .A(_068_),
-    .B(_112_),
+  NOR _365_ (
+    .A(_034_),
+    .B(_072_),
     .Y(_113_)
   );
-  NAND _370_ (
-    .A(_035_),
+  NOR _366_ (
+    .A(_085_),
     .B(_113_),
     .Y(_114_)
   );
-  NAND _371_ (
-    .A(_110_),
+  NAND _367_ (
+    .A(_112_),
     .B(_114_),
-    .Y(decode_op_add_o)
-  );
-  NOR _372_ (
-    .A(decode_insn_i[26]),
-    .B(_059_),
     .Y(_115_)
   );
-  NOR _373_ (
-    .A(_010_),
-    .B(decode_insn_i[0]),
+  NOR _368_ (
+    .A(decode_op_brcond_o),
+    .B(decode_op_lsu_atomic_o),
     .Y(_116_)
   );
-  NAND _374_ (
-    .A(decode_insn_i[2]),
-    .B(_116_),
+  NAND _369_ (
+    .A(_039_),
+    .B(_099_),
     .Y(_117_)
   );
-  NOR _375_ (
-    .A(_108_),
-    .B(_117_),
+  NAND _370_ (
+    .A(_080_),
+    .B(_082_),
     .Y(_118_)
   );
-  NOR _376_ (
-    .A(_115_),
+  NOR _371_ (
+    .A(_117_),
     .B(_118_),
     .Y(_119_)
   );
-  NOT _377_ (
-    .A(_119_),
-    .Y(decode_op_mul_signed_o)
-  );
-  NOR _378_ (
-    .A(decode_insn_i[2]),
-    .B(_013_),
+  NAND _372_ (
+    .A(_116_),
+    .B(_119_),
     .Y(_120_)
   );
-  NOR _379_ (
-    .A(decode_insn_i[2]),
-    .B(_078_),
+  NOR _373_ (
+    .A(_115_),
+    .B(_120_),
     .Y(_121_)
   );
-  NAND _380_ (
-    .A(_077_),
+  NAND _374_ (
+    .A(_110_),
     .B(_121_),
     .Y(_122_)
   );
-  NOT _381_ (
-    .A(_122_),
-    .Y(decode_op_mul_unsigned_o)
-  );
-  NOR _382_ (
-    .A(decode_insn_i[1]),
-    .B(_076_),
+  NAND _375_ (
+    .A(decode_insn_i[7]),
+    .B(decode_insn_i[6]),
     .Y(_123_)
   );
-  NAND _383_ (
-    .A(_120_),
+  NAND _376_ (
+    .A(_008_),
     .B(_123_),
     .Y(_124_)
   );
-  NOT _384_ (
-    .A(_124_),
-    .Y(decode_op_div_signed_o)
-  );
-  NAND _385_ (
-    .A(_071_),
-    .B(_116_),
+  NOR _377_ (
+    .A(decode_insn_i[2]),
+    .B(_012_),
     .Y(_125_)
   );
-  NOT _386_ (
-    .A(_125_),
+  NOR _378_ (
+    .A(decode_insn_i[1]),
+    .B(decode_insn_i[0]),
     .Y(_126_)
   );
-  NAND _387_ (
-    .A(_069_),
-    .B(_126_),
+  NAND _379_ (
+    .A(_011_),
+    .B(_125_),
     .Y(_127_)
   );
-  NOT _388_ (
-    .A(_127_),
-    .Y(decode_op_div_unsigned_o)
-  );
-  NOR _389_ (
-    .A(decode_insn_i[21]),
-    .B(decode_op_jal_o),
+  NOR _380_ (
+    .A(decode_insn_i[1]),
+    .B(_127_),
     .Y(_128_)
   );
-  NOT _390_ (
-    .A(_128_),
-    .Y(decode_rfd_adr_o[0])
-  );
-  NOR _391_ (
-    .A(_015_),
-    .B(decode_op_jal_o),
-    .Y(decode_rfd_adr_o[1])
-  );
-  NOR _392_ (
-    .A(_000_),
-    .B(decode_op_jal_o),
-    .Y(decode_rfd_adr_o[2])
-  );
-  NOR _393_ (
-    .A(decode_insn_i[24]),
-    .B(decode_op_jal_o),
+  NAND _381_ (
+    .A(_125_),
+    .B(_126_),
     .Y(_129_)
   );
-  NOT _394_ (
-    .A(_129_),
-    .Y(decode_rfd_adr_o[3])
-  );
-  NOR _395_ (
-    .A(_001_),
-    .B(decode_op_jal_o),
-    .Y(decode_rfd_adr_o[4])
-  );
-  NOR _396_ (
-    .A(decode_op_mtspr_o),
-    .B(decode_op_lsu_store_o),
+  NAND _382_ (
+    .A(_060_),
+    .B(_128_),
     .Y(_130_)
   );
-  NAND _397_ (
-    .A(_058_),
-    .B(_097_),
+  NAND _383_ (
+    .A(_100_),
+    .B(_130_),
+    .Y(decode_op_shift_o)
+  );
+  NAND _384_ (
+    .A(_124_),
+    .B(decode_op_shift_o),
     .Y(_131_)
   );
-  NAND _398_ (
-    .A(decode_insn_i[11]),
-    .B(_130_),
+  NOR _385_ (
+    .A(_032_),
+    .B(_041_),
     .Y(_132_)
   );
-  NAND _399_ (
-    .A(decode_insn_i[21]),
-    .B(_131_),
+  NAND _386_ (
+    .A(_028_),
+    .B(_132_),
     .Y(_133_)
   );
-  NAND _400_ (
-    .A(_132_),
+  NAND _387_ (
+    .A(_131_),
     .B(_133_),
-    .Y(decode_imm16_o[11])
-  );
-  NOT _401_ (
-    .A(decode_imm16_o[11]),
     .Y(_134_)
   );
-  NAND _402_ (
-    .A(decode_insn_i[12]),
-    .B(_130_),
+  NAND _388_ (
+    .A(decode_insn_i[1]),
+    .B(decode_insn_i[0]),
     .Y(_135_)
   );
-  NAND _403_ (
-    .A(decode_insn_i[22]),
-    .B(_131_),
+  NOR _389_ (
+    .A(decode_insn_i[2]),
+    .B(_011_),
     .Y(_136_)
   );
-  NAND _404_ (
-    .A(_135_),
+  NOR _390_ (
+    .A(decode_insn_i[3]),
     .B(_136_),
-    .Y(decode_imm16_o[12])
-  );
-  NOT _405_ (
-    .A(decode_imm16_o[12]),
     .Y(_137_)
   );
-  NAND _406_ (
-    .A(decode_insn_i[13]),
-    .B(_130_),
+  NAND _391_ (
+    .A(_135_),
+    .B(_137_),
     .Y(_138_)
   );
-  NAND _407_ (
-    .A(decode_insn_i[23]),
-    .B(_131_),
+  NAND _392_ (
+    .A(decode_insn_i[1]),
+    .B(_136_),
     .Y(_139_)
   );
-  NAND _408_ (
-    .A(_138_),
-    .B(_139_),
-    .Y(decode_imm16_o[13])
-  );
-  NOT _409_ (
-    .A(decode_imm16_o[13]),
+  NAND _393_ (
+    .A(_129_),
+    .B(_138_),
     .Y(_140_)
   );
-  NAND _410_ (
-    .A(decode_insn_i[14]),
-    .B(_130_),
+  NAND _394_ (
+    .A(_028_),
+    .B(_139_),
     .Y(_141_)
   );
-  NAND _411_ (
-    .A(decode_insn_i[24]),
-    .B(_131_),
+  NAND _395_ (
+    .A(_010_),
+    .B(decode_insn_i[0]),
     .Y(_142_)
   );
-  NAND _412_ (
-    .A(_141_),
-    .B(_142_),
-    .Y(decode_imm16_o[14])
-  );
-  NOT _413_ (
-    .A(decode_imm16_o[14]),
+  NOR _396_ (
+    .A(_010_),
+    .B(decode_insn_i[0]),
     .Y(_143_)
   );
-  NAND _414_ (
-    .A(decode_insn_i[15]),
-    .B(_130_),
+  NAND _397_ (
+    .A(decode_insn_i[1]),
+    .B(_011_),
     .Y(_144_)
   );
-  NOT _415_ (
-    .A(_144_),
+  NOR _398_ (
+    .A(_140_),
+    .B(_141_),
     .Y(_145_)
   );
-  NOR _416_ (
-    .A(_001_),
-    .B(_130_),
+  NOR _399_ (
+    .A(_013_),
+    .B(decode_insn_i[23]),
     .Y(_146_)
   );
-  NOR _417_ (
-    .A(_145_),
+  NAND _400_ (
+    .A(_015_),
     .B(_146_),
     .Y(_147_)
   );
-  NOT _418_ (
-    .A(_147_),
-    .Y(decode_imm16_o[15])
-  );
-  NAND _419_ (
-    .A(_058_),
-    .B(_103_),
+  NOR _401_ (
+    .A(decode_insn_i[24]),
+    .B(decode_insn_i[23]),
     .Y(_148_)
   );
-  NAND _420_ (
-    .A(_035_),
-    .B(_103_),
+  NAND _402_ (
+    .A(_070_),
+    .B(_147_),
     .Y(_149_)
   );
-  NOR _421_ (
-    .A(_096_),
-    .B(decode_op_lsu_atomic_o),
+  NOR _403_ (
+    .A(_148_),
+    .B(_149_),
     .Y(_150_)
   );
-  NAND _422_ (
-    .A(_149_),
+  NOR _404_ (
+    .A(_145_),
     .B(_150_),
     .Y(_151_)
   );
-  NOR _423_ (
-    .A(_148_),
+  NOR _405_ (
+    .A(_058_),
     .B(_151_),
     .Y(_152_)
   );
-  NOR _424_ (
-    .A(_013_),
-    .B(_152_),
-    .Y(decode_immediate_o[0])
-  );
-  NOR _425_ (
-    .A(_010_),
-    .B(_152_),
-    .Y(decode_immediate_o[1])
-  );
-  NOR _426_ (
-    .A(_011_),
-    .B(_152_),
-    .Y(decode_immediate_o[2])
-  );
-  NOR _427_ (
-    .A(_012_),
-    .B(_152_),
-    .Y(decode_immediate_o[3])
-  );
-  NOR _428_ (
-    .A(_016_),
-    .B(_152_),
-    .Y(decode_immediate_o[4])
-  );
-  NOR _429_ (
-    .A(_017_),
-    .B(_152_),
-    .Y(decode_immediate_o[5])
-  );
-  NOR _430_ (
-    .A(_005_),
-    .B(_152_),
-    .Y(decode_immediate_o[6])
-  );
-  NOR _431_ (
-    .A(_007_),
-    .B(_152_),
-    .Y(decode_immediate_o[7])
-  );
-  NOR _432_ (
-    .A(_006_),
-    .B(_152_),
-    .Y(decode_immediate_o[8])
-  );
-  NOR _433_ (
-    .A(_018_),
-    .B(_152_),
-    .Y(decode_immediate_o[9])
-  );
-  NOR _434_ (
-    .A(_019_),
-    .B(_152_),
-    .Y(decode_immediate_o[10])
-  );
-  NOR _435_ (
+  NOR _406_ (
     .A(_134_),
     .B(_152_),
-    .Y(decode_immediate_o[11])
-  );
-  NOR _436_ (
-    .A(_137_),
-    .B(_152_),
-    .Y(decode_immediate_o[12])
-  );
-  NOR _437_ (
-    .A(_140_),
-    .B(_152_),
-    .Y(decode_immediate_o[13])
-  );
-  NOR _438_ (
-    .A(_143_),
-    .B(_152_),
-    .Y(decode_immediate_o[14])
-  );
-  NOR _439_ (
-    .A(_147_),
-    .B(_152_),
-    .Y(decode_immediate_o[15])
-  );
-  NAND _440_ (
-    .A(decode_imm16_o[15]),
-    .B(_151_),
     .Y(_153_)
   );
-  NAND _441_ (
-    .A(decode_insn_i[0]),
-    .B(_152_),
+  NAND _407_ (
+    .A(_122_),
+    .B(_153_),
+    .Y(decode_except_illegal_o)
+  );
+  NAND _408_ (
+    .A(_021_),
+    .B(_076_),
     .Y(_154_)
   );
-  NAND _442_ (
-    .A(_153_),
-    .B(_154_),
-    .Y(decode_immediate_o[16])
-  );
-  NAND _443_ (
-    .A(decode_insn_i[1]),
-    .B(_152_),
+  NOT _409_ (
+    .A(_154_),
     .Y(_155_)
   );
-  NAND _444_ (
-    .A(_153_),
+  NOR _410_ (
+    .A(_094_),
     .B(_155_),
-    .Y(decode_immediate_o[17])
-  );
-  NAND _445_ (
-    .A(decode_insn_i[2]),
-    .B(_152_),
     .Y(_156_)
   );
-  NAND _446_ (
-    .A(_153_),
-    .B(_156_),
-    .Y(decode_immediate_o[18])
+  NOT _411_ (
+    .A(_156_),
+    .Y(decode_op_setflag_o)
   );
-  NAND _447_ (
-    .A(decode_insn_i[3]),
-    .B(_152_),
+  NAND _412_ (
+    .A(decode_insn_i[8]),
+    .B(_156_),
     .Y(_157_)
   );
-  NAND _448_ (
-    .A(_153_),
-    .B(_157_),
-    .Y(decode_immediate_o[19])
-  );
-  NAND _449_ (
-    .A(decode_insn_i[4]),
-    .B(_152_),
+  NAND _413_ (
+    .A(decode_insn_i[23]),
+    .B(decode_op_setflag_o),
     .Y(_158_)
   );
-  NAND _450_ (
-    .A(_153_),
+  NAND _414_ (
+    .A(_157_),
     .B(_158_),
-    .Y(decode_immediate_o[20])
+    .Y(decode_opc_alu_secondary_o[2])
   );
-  NAND _451_ (
-    .A(decode_insn_i[5]),
-    .B(_152_),
+  NAND _415_ (
+    .A(decode_insn_i[7]),
+    .B(_156_),
     .Y(_159_)
   );
-  NAND _452_ (
-    .A(_153_),
-    .B(_159_),
-    .Y(decode_immediate_o[21])
-  );
-  NAND _453_ (
-    .A(decode_insn_i[6]),
-    .B(_152_),
+  NAND _416_ (
+    .A(decode_insn_i[22]),
+    .B(decode_op_setflag_o),
     .Y(_160_)
   );
-  NAND _454_ (
-    .A(_153_),
+  NAND _417_ (
+    .A(_159_),
     .B(_160_),
-    .Y(decode_immediate_o[22])
+    .Y(decode_opc_alu_secondary_o[1])
   );
-  NAND _455_ (
-    .A(decode_insn_i[7]),
-    .B(_152_),
+  NAND _418_ (
+    .A(decode_insn_i[6]),
+    .B(_156_),
     .Y(_161_)
   );
-  NAND _456_ (
-    .A(_153_),
-    .B(_161_),
-    .Y(decode_immediate_o[23])
-  );
-  NAND _457_ (
-    .A(decode_insn_i[8]),
-    .B(_152_),
+  NAND _419_ (
+    .A(decode_insn_i[21]),
+    .B(decode_op_setflag_o),
     .Y(_162_)
   );
-  NAND _458_ (
-    .A(_153_),
+  NAND _420_ (
+    .A(_161_),
     .B(_162_),
-    .Y(decode_immediate_o[24])
+    .Y(decode_opc_alu_secondary_o[0])
   );
-  NAND _459_ (
-    .A(decode_insn_i[9]),
-    .B(_152_),
+  NAND _421_ (
+    .A(_009_),
+    .B(_062_),
     .Y(_163_)
   );
-  NAND _460_ (
-    .A(_153_),
+  NAND _422_ (
+    .A(_066_),
     .B(_163_),
-    .Y(decode_immediate_o[25])
-  );
-  NAND _461_ (
-    .A(decode_insn_i[10]),
-    .B(_152_),
     .Y(_164_)
   );
-  NAND _462_ (
-    .A(_153_),
+  NAND _423_ (
+    .A(_086_),
     .B(_164_),
-    .Y(decode_immediate_o[26])
+    .Y(decode_opc_alu_o[2])
   );
-  NAND _463_ (
-    .A(decode_imm16_o[11]),
-    .B(_152_),
+  NAND _424_ (
+    .A(decode_insn_i[1]),
+    .B(_062_),
     .Y(_165_)
   );
-  NAND _464_ (
-    .A(_153_),
-    .B(_165_),
-    .Y(decode_immediate_o[27])
-  );
-  NAND _465_ (
-    .A(decode_imm16_o[12]),
-    .B(_152_),
+  NOT _425_ (
+    .A(_165_),
     .Y(_166_)
   );
-  NAND _466_ (
-    .A(_153_),
+  NOR _426_ (
+    .A(_065_),
     .B(_166_),
-    .Y(decode_immediate_o[28])
-  );
-  NAND _467_ (
-    .A(decode_imm16_o[13]),
-    .B(_152_),
     .Y(_167_)
   );
-  NAND _468_ (
-    .A(_153_),
+  NOR _427_ (
+    .A(_085_),
     .B(_167_),
-    .Y(decode_immediate_o[29])
-  );
-  NAND _469_ (
-    .A(decode_imm16_o[14]),
-    .B(_152_),
-    .Y(_168_)
-  );
-  NAND _470_ (
-    .A(_153_),
-    .B(_168_),
-    .Y(decode_immediate_o[30])
-  );
-  NOR _471_ (
-    .A(_147_),
-    .B(_148_),
-    .Y(decode_immediate_o[31])
-  );
-  NAND _472_ (
-    .A(_013_),
-    .B(_102_),
-    .Y(_169_)
-  );
-  NOR _473_ (
-    .A(_105_),
-    .B(_169_),
-    .Y(_170_)
-  );
-  NOR _474_ (
-    .A(_099_),
-    .B(_170_),
-    .Y(decode_opc_alu_o[0])
-  );
-  NAND _475_ (
-    .A(decode_insn_i[1]),
-    .B(_106_),
-    .Y(_171_)
-  );
-  NOT _476_ (
-    .A(_171_),
-    .Y(_172_)
-  );
-  NOR _477_ (
-    .A(_101_),
-    .B(_172_),
-    .Y(_173_)
-  );
-  NOR _478_ (
-    .A(_099_),
-    .B(_173_),
     .Y(decode_opc_alu_o[1])
   );
-  NOR _479_ (
-    .A(decode_insn_i[2]),
-    .B(_105_),
+  NOR _428_ (
+    .A(decode_insn_i[0]),
+    .B(_067_),
+    .Y(_168_)
+  );
+  NOR _429_ (
+    .A(_085_),
+    .B(_168_),
+    .Y(decode_opc_alu_o[0])
+  );
+  NOR _430_ (
+    .A(_089_),
+    .B(_098_),
+    .Y(_169_)
+  );
+  NOT _431_ (
+    .A(_169_),
+    .Y(decode_op_lsu_store_o)
+  );
+  NOR _432_ (
+    .A(decode_op_mtspr_o),
+    .B(decode_op_lsu_store_o),
+    .Y(_170_)
+  );
+  NAND _433_ (
+    .A(_069_),
+    .B(_169_),
+    .Y(_171_)
+  );
+  NAND _434_ (
+    .A(decode_insn_i[15]),
+    .B(_170_),
+    .Y(_172_)
+  );
+  NOT _435_ (
+    .A(_172_),
+    .Y(_173_)
+  );
+  NOR _436_ (
+    .A(_015_),
+    .B(_170_),
     .Y(_174_)
   );
-  NOR _480_ (
-    .A(_101_),
+  NOR _437_ (
+    .A(_173_),
     .B(_174_),
     .Y(_175_)
   );
-  NOR _481_ (
-    .A(_099_),
-    .B(_175_),
+  NOT _438_ (
+    .A(_175_),
+    .Y(decode_imm16_o[15])
+  );
+  NOR _439_ (
+    .A(_065_),
+    .B(_085_),
     .Y(_176_)
   );
-  NOT _482_ (
-    .A(_176_),
-    .Y(decode_opc_alu_o[2])
-  );
-  NAND _483_ (
-    .A(decode_insn_i[3]),
-    .B(_107_),
+  NAND _440_ (
+    .A(_069_),
+    .B(_176_),
     .Y(_177_)
   );
-  NOT _484_ (
-    .A(_177_),
-    .Y(decode_opc_alu_o[3])
-  );
-  NAND _485_ (
-    .A(decode_insn_i[6]),
-    .B(_048_),
+  NAND _441_ (
+    .A(_036_),
+    .B(_176_),
     .Y(_178_)
   );
-  NAND _486_ (
-    .A(decode_insn_i[21]),
-    .B(decode_op_setflag_o),
+  NOR _442_ (
+    .A(decode_op_lsu_atomic_o),
+    .B(_098_),
     .Y(_179_)
   );
-  NAND _487_ (
+  NAND _443_ (
     .A(_178_),
     .B(_179_),
-    .Y(decode_opc_alu_secondary_o[0])
-  );
-  NAND _488_ (
-    .A(decode_insn_i[7]),
-    .B(_048_),
     .Y(_180_)
   );
-  NAND _489_ (
-    .A(decode_insn_i[22]),
-    .B(decode_op_setflag_o),
+  NOR _444_ (
+    .A(_177_),
+    .B(_180_),
     .Y(_181_)
   );
-  NAND _490_ (
-    .A(_180_),
-    .B(_181_),
-    .Y(decode_opc_alu_secondary_o[1])
-  );
-  NAND _491_ (
-    .A(decode_insn_i[8]),
-    .B(_048_),
+  NAND _445_ (
+    .A(decode_insn_i[14]),
+    .B(_170_),
     .Y(_182_)
   );
-  NAND _492_ (
-    .A(decode_insn_i[23]),
-    .B(decode_op_setflag_o),
+  NAND _446_ (
+    .A(decode_insn_i[24]),
+    .B(_171_),
     .Y(_183_)
   );
-  NAND _493_ (
+  NAND _447_ (
     .A(_182_),
     .B(_183_),
-    .Y(decode_opc_alu_secondary_o[2])
+    .Y(decode_imm16_o[14])
   );
-  NAND _494_ (
-    .A(decode_insn_i[24]),
-    .B(decode_op_setflag_o),
+  NOT _448_ (
+    .A(decode_imm16_o[14]),
     .Y(_184_)
   );
-  NOT _495_ (
-    .A(_184_),
-    .Y(decode_opc_alu_secondary_o[3])
-  );
-  NAND _496_ (
-    .A(_027_),
-    .B(_049_),
+  NAND _449_ (
+    .A(_181_),
+    .B(decode_imm16_o[14]),
     .Y(_185_)
   );
-  NAND _497_ (
-    .A(_056_),
-    .B(_185_),
+  NAND _450_ (
+    .A(decode_imm16_o[15]),
+    .B(_180_),
     .Y(_186_)
   );
-  NOR _498_ (
-    .A(_060_),
-    .B(_062_),
+  NAND _451_ (
+    .A(_185_),
+    .B(_186_),
+    .Y(decode_immediate_o[30])
+  );
+  NAND _452_ (
+    .A(decode_insn_i[13]),
+    .B(_170_),
     .Y(_187_)
   );
-  NOT _499_ (
-    .A(_187_),
+  NAND _453_ (
+    .A(decode_insn_i[23]),
+    .B(_171_),
     .Y(_188_)
   );
-  NOR _500_ (
-    .A(_186_),
+  NAND _454_ (
+    .A(_187_),
     .B(_188_),
+    .Y(decode_imm16_o[13])
+  );
+  NOT _455_ (
+    .A(decode_imm16_o[13]),
     .Y(_189_)
   );
-  NOR _501_ (
-    .A(_030_),
-    .B(_189_),
+  NAND _456_ (
+    .A(_181_),
+    .B(decode_imm16_o[13]),
     .Y(_190_)
   );
-  NAND _502_ (
-    .A(_034_),
-    .B(_035_),
+  NAND _457_ (
+    .A(_186_),
+    .B(_190_),
+    .Y(decode_immediate_o[29])
+  );
+  NAND _458_ (
+    .A(decode_insn_i[12]),
+    .B(_170_),
     .Y(_191_)
   );
-  NOR _503_ (
-    .A(_095_),
-    .B(_191_),
+  NAND _459_ (
+    .A(decode_insn_i[22]),
+    .B(_171_),
     .Y(_192_)
   );
-  NOR _504_ (
-    .A(_024_),
-    .B(_036_),
+  NAND _460_ (
+    .A(_191_),
+    .B(_192_),
+    .Y(decode_imm16_o[12])
+  );
+  NOT _461_ (
+    .A(decode_imm16_o[12]),
     .Y(_193_)
   );
-  NAND _505_ (
-    .A(_055_),
-    .B(_193_),
+  NAND _462_ (
+    .A(_181_),
+    .B(decode_imm16_o[12]),
     .Y(_194_)
   );
-  NAND _506_ (
-    .A(_022_),
-    .B(_031_),
+  NAND _463_ (
+    .A(_186_),
+    .B(_194_),
+    .Y(decode_immediate_o[28])
+  );
+  NAND _464_ (
+    .A(decode_insn_i[11]),
+    .B(_170_),
     .Y(_195_)
   );
-  NAND _507_ (
-    .A(_194_),
-    .B(_195_),
+  NAND _465_ (
+    .A(decode_insn_i[21]),
+    .B(_171_),
     .Y(_196_)
   );
-  NOR _508_ (
-    .A(_192_),
+  NAND _466_ (
+    .A(_195_),
     .B(_196_),
+    .Y(decode_imm16_o[11])
+  );
+  NOT _467_ (
+    .A(decode_imm16_o[11]),
     .Y(_197_)
   );
-  NAND _509_ (
-    .A(_107_),
-    .B(_197_),
+  NAND _468_ (
+    .A(_181_),
+    .B(decode_imm16_o[11]),
     .Y(_198_)
   );
-  NOR _510_ (
-    .A(_190_),
+  NAND _469_ (
+    .A(_186_),
     .B(_198_),
+    .Y(decode_immediate_o[27])
+  );
+  NAND _470_ (
+    .A(decode_insn_i[10]),
+    .B(_181_),
     .Y(_199_)
   );
-  NOR _511_ (
-    .A(decode_op_setflag_o),
-    .B(decode_op_lsu_store_o),
+  NAND _471_ (
+    .A(_186_),
+    .B(_199_),
+    .Y(decode_immediate_o[26])
+  );
+  NAND _472_ (
+    .A(decode_insn_i[9]),
+    .B(_181_),
     .Y(_200_)
   );
-  NAND _512_ (
-    .A(_052_),
-    .B(_088_),
+  NAND _473_ (
+    .A(_186_),
+    .B(_200_),
+    .Y(decode_immediate_o[25])
+  );
+  NAND _474_ (
+    .A(decode_insn_i[8]),
+    .B(_181_),
     .Y(_201_)
   );
-  NOT _513_ (
-    .A(_201_),
+  NAND _475_ (
+    .A(_186_),
+    .B(_201_),
+    .Y(decode_immediate_o[24])
+  );
+  NAND _476_ (
+    .A(decode_insn_i[7]),
+    .B(_181_),
     .Y(_202_)
   );
-  NOR _514_ (
-    .A(_062_),
-    .B(_111_),
+  NAND _477_ (
+    .A(_186_),
+    .B(_202_),
+    .Y(decode_immediate_o[23])
+  );
+  NAND _478_ (
+    .A(decode_insn_i[6]),
+    .B(_181_),
     .Y(_203_)
   );
-  NOR _515_ (
-    .A(_036_),
+  NAND _479_ (
+    .A(_186_),
     .B(_203_),
+    .Y(decode_immediate_o[22])
+  );
+  NAND _480_ (
+    .A(decode_insn_i[5]),
+    .B(_181_),
     .Y(_204_)
   );
-  NOR _516_ (
-    .A(_201_),
+  NAND _481_ (
+    .A(_186_),
     .B(_204_),
+    .Y(decode_immediate_o[21])
+  );
+  NAND _482_ (
+    .A(decode_insn_i[4]),
+    .B(_181_),
     .Y(_205_)
   );
-  NAND _517_ (
-    .A(_200_),
+  NAND _483_ (
+    .A(_186_),
     .B(_205_),
+    .Y(decode_immediate_o[20])
+  );
+  NAND _484_ (
+    .A(decode_insn_i[3]),
+    .B(_181_),
     .Y(_206_)
   );
-  NAND _518_ (
-    .A(_053_),
-    .B(_058_),
+  NAND _485_ (
+    .A(_186_),
+    .B(_206_),
+    .Y(decode_immediate_o[19])
+  );
+  NAND _486_ (
+    .A(decode_insn_i[2]),
+    .B(_181_),
     .Y(_207_)
   );
-  NOR _519_ (
-    .A(decode_op_jal_o),
+  NAND _487_ (
+    .A(_186_),
     .B(_207_),
+    .Y(decode_immediate_o[18])
+  );
+  NAND _488_ (
+    .A(decode_insn_i[1]),
+    .B(_181_),
     .Y(_208_)
   );
-  NAND _520_ (
-    .A(_059_),
-    .B(_081_),
+  NAND _489_ (
+    .A(_186_),
+    .B(_208_),
+    .Y(decode_immediate_o[17])
+  );
+  NAND _490_ (
+    .A(decode_insn_i[0]),
+    .B(_181_),
     .Y(_209_)
   );
-  NOR _521_ (
-    .A(_075_),
+  NAND _491_ (
+    .A(_186_),
     .B(_209_),
+    .Y(decode_immediate_o[16])
+  );
+  NOR _492_ (
+    .A(_175_),
+    .B(_181_),
+    .Y(decode_immediate_o[15])
+  );
+  NOR _493_ (
+    .A(_181_),
+    .B(_184_),
+    .Y(decode_immediate_o[14])
+  );
+  NOR _494_ (
+    .A(_181_),
+    .B(_189_),
+    .Y(decode_immediate_o[13])
+  );
+  NOR _495_ (
+    .A(_181_),
+    .B(_193_),
+    .Y(decode_immediate_o[12])
+  );
+  NOR _496_ (
+    .A(_181_),
+    .B(_197_),
+    .Y(decode_immediate_o[11])
+  );
+  NOR _497_ (
+    .A(_017_),
+    .B(_181_),
+    .Y(decode_immediate_o[10])
+  );
+  NOR _498_ (
+    .A(_018_),
+    .B(_181_),
+    .Y(decode_immediate_o[9])
+  );
+  NOR _499_ (
+    .A(_008_),
+    .B(_181_),
+    .Y(decode_immediate_o[8])
+  );
+  NOR _500_ (
+    .A(_006_),
+    .B(_181_),
+    .Y(decode_immediate_o[7])
+  );
+  NOR _501_ (
+    .A(_007_),
+    .B(_181_),
+    .Y(decode_immediate_o[6])
+  );
+  NOR _502_ (
+    .A(_019_),
+    .B(_181_),
+    .Y(decode_immediate_o[5])
+  );
+  NOR _503_ (
+    .A(_020_),
+    .B(_181_),
+    .Y(decode_immediate_o[4])
+  );
+  NOR _504_ (
+    .A(_012_),
+    .B(_181_),
+    .Y(decode_immediate_o[3])
+  );
+  NOR _505_ (
+    .A(_009_),
+    .B(_181_),
+    .Y(decode_immediate_o[2])
+  );
+  NOR _506_ (
+    .A(_010_),
+    .B(_181_),
+    .Y(decode_immediate_o[1])
+  );
+  NOR _507_ (
+    .A(_011_),
+    .B(_181_),
+    .Y(decode_immediate_o[0])
+  );
+  NAND _508_ (
+    .A(_091_),
+    .B(_132_),
     .Y(_210_)
   );
-  NAND _522_ (
-    .A(_208_),
-    .B(_210_),
+  NOR _509_ (
+    .A(_034_),
+    .B(_077_),
     .Y(_211_)
   );
-  NOR _523_ (
-    .A(_206_),
-    .B(_211_),
+  NOT _510_ (
+    .A(_211_),
     .Y(_212_)
   );
-  NOR _524_ (
-    .A(_030_),
-    .B(_187_),
-    .Y(decode_op_brcond_o)
-  );
-  NAND _525_ (
-    .A(_199_),
+  NAND _511_ (
+    .A(_210_),
     .B(_212_),
+    .Y(decode_op_jal_o)
+  );
+  NOR _512_ (
+    .A(decode_insn_i[24]),
+    .B(decode_op_jal_o),
     .Y(_213_)
   );
-  NAND _526_ (
-    .A(decode_insn_i[6]),
-    .B(decode_insn_i[7]),
+  NOT _513_ (
+    .A(_213_),
+    .Y(decode_rfd_adr_o[3])
+  );
+  NOR _514_ (
+    .A(_014_),
+    .B(decode_op_jal_o),
+    .Y(decode_rfd_adr_o[2])
+  );
+  NOR _515_ (
+    .A(_016_),
+    .B(decode_op_jal_o),
+    .Y(decode_rfd_adr_o[1])
+  );
+  NOR _516_ (
+    .A(decode_insn_i[21]),
+    .B(decode_op_jal_o),
     .Y(_214_)
   );
-  NAND _527_ (
-    .A(_006_),
-    .B(_214_),
+  NOT _517_ (
+    .A(_214_),
+    .Y(decode_rfd_adr_o[0])
+  );
+  NAND _518_ (
+    .A(_012_),
+    .B(_060_),
     .Y(_215_)
   );
-  NAND _528_ (
-    .A(decode_op_shift_o),
+  NOR _519_ (
+    .A(decode_insn_i[2]),
     .B(_215_),
     .Y(_216_)
   );
-  NAND _529_ (
-    .A(_012_),
-    .B(_078_),
+  NAND _520_ (
+    .A(_143_),
+    .B(_216_),
     .Y(_217_)
   );
-  NOR _530_ (
-    .A(_120_),
+  NAND _521_ (
+    .A(_156_),
     .B(_217_),
+    .Y(decode_adder_do_sub_o)
+  );
+  NOR _522_ (
+    .A(_073_),
+    .B(_147_),
+    .Y(decode_except_trap_o)
+  );
+  NAND _523_ (
+    .A(_074_),
+    .B(_148_),
     .Y(_218_)
   );
-  NOR _531_ (
-    .A(_121_),
+  NOR _524_ (
+    .A(decode_insn_i[25]),
     .B(_218_),
+    .Y(decode_except_syscall_o)
+  );
+  NAND _525_ (
+    .A(decode_insn_i[24]),
+    .B(decode_op_setflag_o),
     .Y(_219_)
   );
-  NAND _532_ (
-    .A(_069_),
-    .B(_219_),
+  NOT _526_ (
+    .A(_219_),
+    .Y(decode_opc_alu_secondary_o[3])
+  );
+  NAND _527_ (
+    .A(decode_insn_i[3]),
+    .B(_086_),
     .Y(_220_)
   );
-  NOR _533_ (
-    .A(_073_),
+  NOR _528_ (
+    .A(_067_),
     .B(_220_),
+    .Y(decode_opc_alu_o[3])
+  );
+  NAND _529_ (
+    .A(_111_),
+    .B(_181_),
+    .Y(decode_immediate_sel_o)
+  );
+  NOR _530_ (
+    .A(_175_),
+    .B(_177_),
+    .Y(decode_immediate_o[31])
+  );
+  NOR _531_ (
+    .A(_015_),
+    .B(decode_op_jal_o),
+    .Y(decode_rfd_adr_o[4])
+  );
+  NOR _532_ (
+    .A(_029_),
+    .B(_063_),
     .Y(_221_)
   );
-  NOR _534_ (
-    .A(_081_),
-    .B(_082_),
+  NAND _533_ (
+    .A(_170_),
+    .B(_221_),
     .Y(_222_)
   );
-  NAND _535_ (
-    .A(_085_),
-    .B(_222_),
+  NAND _534_ (
+    .A(_036_),
+    .B(_154_),
     .Y(_223_)
   );
-  NAND _536_ (
-    .A(_216_),
-    .B(_223_),
+  NOR _535_ (
+    .A(decode_op_movhi_o),
+    .B(decode_op_jal_o),
     .Y(_224_)
   );
-  NOR _537_ (
-    .A(_221_),
-    .B(_224_),
+  NOT _536_ (
+    .A(_224_),
     .Y(_225_)
   );
-  NAND _538_ (
-    .A(_213_),
-    .B(_225_),
-    .Y(decode_except_illegal_o)
-  );
-  NOR _539_ (
-    .A(_046_),
-    .B(_112_),
+  NAND _537_ (
+    .A(_093_),
+    .B(_223_),
     .Y(_226_)
   );
-  NOR _540_ (
-    .A(_192_),
+  NOR _538_ (
+    .A(_225_),
     .B(_226_),
     .Y(_227_)
   );
-  NOT _541_ (
-    .A(_227_),
-    .Y(decode_lsu_length_o[0])
+  NAND _539_ (
+    .A(_222_),
+    .B(_227_),
+    .Y(decode_rf_wb_o)
   );
-  NOR _542_ (
-    .A(_036_),
-    .B(_187_),
+  NAND _540_ (
+    .A(decode_insn_i[2]),
+    .B(decode_insn_i[3]),
     .Y(_228_)
   );
-  NAND _543_ (
-    .A(_045_),
-    .B(_051_),
+  NOR _541_ (
+    .A(_135_),
+    .B(_228_),
     .Y(_229_)
   );
-  NAND _544_ (
-    .A(_227_),
+  NAND _542_ (
+    .A(_060_),
     .B(_229_),
     .Y(_230_)
   );
-  NOR _545_ (
-    .A(_228_),
-    .B(_230_),
-    .Y(decode_lsu_length_o[1])
+  NOT _543_ (
+    .A(_230_),
+    .Y(decode_op_ffl1_o)
   );
-  NAND _546_ (
-    .A(_003_),
-    .B(_029_),
+  NAND _544_ (
+    .A(_060_),
+    .B(_125_),
     .Y(_231_)
   );
-  NOR _547_ (
-    .A(_094_),
+  NOR _545_ (
+    .A(_142_),
     .B(_231_),
-    .Y(decode_op_jbr_o)
+    .Y(decode_op_div_signed_o)
   );
-  NOR _548_ (
-    .A(_043_),
-    .B(_046_),
+  NOR _546_ (
+    .A(_144_),
+    .B(_231_),
+    .Y(decode_op_div_unsigned_o)
+  );
+  NOR _547_ (
+    .A(decode_op_div_signed_o),
+    .B(decode_op_div_unsigned_o),
     .Y(_232_)
   );
-  NAND _549_ (
-    .A(_130_),
-    .B(_232_),
+  NOT _548_ (
+    .A(_232_),
+    .Y(decode_op_div_o)
+  );
+  NOR _549_ (
+    .A(_144_),
+    .B(_215_),
     .Y(_233_)
   );
   NAND _550_ (
-    .A(_035_),
-    .B(_039_),
+    .A(decode_insn_i[2]),
+    .B(_233_),
     .Y(_234_)
   );
   NAND _551_ (
-    .A(_202_),
+    .A(_080_),
     .B(_234_),
-    .Y(_235_)
+    .Y(decode_op_mul_signed_o)
   );
   NOR _552_ (
-    .A(decode_op_jal_o),
-    .B(_235_),
-    .Y(_236_)
+    .A(_135_),
+    .B(_231_),
+    .Y(decode_op_mul_unsigned_o)
   );
-  NAND _553_ (
-    .A(_233_),
-    .B(_236_),
-    .Y(decode_rf_wb_o)
+  NOR _553_ (
+    .A(decode_op_mul_signed_o),
+    .B(decode_op_mul_unsigned_o),
+    .Y(_235_)
   );
-  NAND _554_ (
-    .A(_052_),
-    .B(_152_),
-    .Y(decode_immediate_sel_o)
-  );
-  NAND _555_ (
-    .A(_109_),
-    .B(_116_),
-    .Y(_237_)
-  );
-  NAND _556_ (
-    .A(_048_),
-    .B(_237_),
-    .Y(decode_adder_do_sub_o)
-  );
-  NAND _557_ (
-    .A(_026_),
-    .B(_195_),
-    .Y(decode_op_jr_o)
-  );
-  NOR _558_ (
-    .A(decode_op_jbr_o),
-    .B(decode_op_jr_o),
-    .Y(_238_)
-  );
-  NOT _559_ (
-    .A(_238_),
-    .Y(decode_op_branch_o)
-  );
-  NAND _560_ (
-    .A(_119_),
-    .B(_122_),
+  NOT _554_ (
+    .A(_235_),
     .Y(decode_op_mul_o)
   );
-  NAND _561_ (
-    .A(_124_),
-    .B(_127_),
-    .Y(decode_op_div_o)
+  NAND _555_ (
+    .A(_027_),
+    .B(_058_),
+    .Y(_236_)
   );
-  assign decode_adder_do_carry_o = 1'h0;
-  assign decode_imm16_o[10:0] = decode_insn_i[10:0];
-  assign decode_immjbr_upper_o = decode_insn_i[25:16];
-  assign decode_lsu_zext_o = decode_insn_i[26];
-  assign decode_op_fpu_o = 8'h00;
-  assign decode_opc_insn_o = decode_insn_i[31:26];
-  assign decode_rfa_adr_o = decode_insn_i[20:16];
-  assign decode_rfb_adr_o = decode_insn_i[15:11];
-  assign imm_high = { decode_imm16_o[15:11], decode_insn_i[10:0], 16'h0000 };
+  NAND _556_ (
+    .A(_036_),
+    .B(_236_),
+    .Y(_237_)
+  );
+  NAND _557_ (
+    .A(_135_),
+    .B(_216_),
+    .Y(_238_)
+  );
+  NAND _558_ (
+    .A(_237_),
+    .B(_238_),
+    .Y(decode_op_add_o)
+  );
+  NOR _559_ (
+    .A(decode_insn_i[27]),
+    .B(_102_),
+    .Y(decode_op_mfspr_o)
+  );
+  NAND _560_ (
+    .A(_001_),
+    .B(_070_),
+    .Y(_239_)
+  );
+  NOR _561_ (
+    .A(_096_),
+    .B(_239_),
+    .Y(decode_op_jbr_o)
+  );
+  NOR _562_ (
+    .A(decode_op_jr_o),
+    .B(decode_op_jbr_o),
+    .Y(_240_)
+  );
+  NOT _563_ (
+    .A(_240_),
+    .Y(decode_op_branch_o)
+  );
+  NAND _564_ (
+    .A(_068_),
+    .B(_086_),
+    .Y(decode_op_alu_o)
+  );
+  NOR _565_ (
+    .A(_015_),
+    .B(_218_),
+    .Y(decode_op_msync_o)
+  );
+  NAND _566_ (
+    .A(_025_),
+    .B(_081_),
+    .Y(_241_)
+  );
+  NAND _567_ (
+    .A(_093_),
+    .B(_241_),
+    .Y(decode_op_lsu_load_o)
+  );
+  BUF _568_ (
+    .A(decode_insn_i[10]),
+    .Y(decode_imm16_o[10])
+  );
+  BUF _569_ (
+    .A(decode_insn_i[9]),
+    .Y(decode_imm16_o[9])
+  );
+  BUF _570_ (
+    .A(decode_insn_i[8]),
+    .Y(decode_imm16_o[8])
+  );
+  BUF _571_ (
+    .A(decode_insn_i[7]),
+    .Y(decode_imm16_o[7])
+  );
+  BUF _572_ (
+    .A(decode_insn_i[6]),
+    .Y(decode_imm16_o[6])
+  );
+  BUF _573_ (
+    .A(decode_insn_i[5]),
+    .Y(decode_imm16_o[5])
+  );
+  BUF _574_ (
+    .A(decode_insn_i[4]),
+    .Y(decode_imm16_o[4])
+  );
+  BUF _575_ (
+    .A(decode_insn_i[3]),
+    .Y(decode_imm16_o[3])
+  );
+  BUF _576_ (
+    .A(decode_insn_i[2]),
+    .Y(decode_imm16_o[2])
+  );
+  BUF _577_ (
+    .A(decode_insn_i[1]),
+    .Y(decode_imm16_o[1])
+  );
+  BUF _578_ (
+    .A(decode_insn_i[0]),
+    .Y(decode_imm16_o[0])
+  );
   assign imm_high_sel = decode_op_movhi_o;
-  assign imm_sext = { decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15:11], decode_insn_i[10:0] };
-  assign imm_zext = { 16'h0000, decode_imm16_o[15:11], decode_insn_i[10:0] };
+  assign imm_high = { decode_imm16_o, 16'h0000 };
+  assign imm_zext = { 16'h0000, decode_imm16_o };
+  assign imm_sext = { decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o[15], decode_imm16_o };
   assign opc_alu = decode_insn_i[3:0];
   assign opc_insn = decode_insn_i[31:26];
+  assign decode_opc_insn_o = decode_insn_i[31:26];
+  assign decode_adder_do_carry_o = 1'h0;
+  assign decode_op_fpu_o = 8'h00;
+  assign decode_op_ext_o = 1'h0;
+  assign decode_lsu_zext_o = decode_insn_i[26];
+  assign decode_rfb_adr_o = decode_insn_i[15:11];
+  assign decode_rfa_adr_o = decode_insn_i[20:16];
+  assign decode_immjbr_upper_o = decode_insn_i[25:16];
 endmodule
